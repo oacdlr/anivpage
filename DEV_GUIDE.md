@@ -1,0 +1,289 @@
+# How to look after this website
+
+This guide is for editing the site later without needing any help. You don't
+need to understand the code — everything you'll normally want to change lives
+in plain text files in one folder.
+
+---
+
+## 1. What's where
+
+```
+content/          <-- EVERYTHING YOU'LL NORMALLY EDIT IS IN HERE
+  letter.md            the text of the letter
+  album.json           which photos appear in the album
+  post-its.json        the messages on the post-it wall
+  date-ideas.json      the list of date ideas
+  screensavers.json    which images appear as screensavers
+  bouquet-options.json the flower/colour/wrap choices
+
+public/           <-- THE ACTUAL IMAGE FILES GO IN HERE
+  photos/              album photos
+  screensavers/        screensaver images
+
+app/              the seven pages themselves (code — leave alone unless adding a page)
+components/       shared pieces used by more than one page
+lib/              the small bits of logic (date matching, bouquet generator)
+```
+
+The seven pages, and which sticker goes where:
+
+| Address (what the sticker points at) | What it is |
+|---|---|
+| `/album` | photo album |
+| `/letter` | the letter |
+| `/date` | date generator |
+| `/bouquet` | bouquet builder |
+| `/postits` | post-it wall |
+| `/surprise` | the flower animation |
+| `/screensavers` | screensaver gallery |
+
+---
+
+## 2. A note about JSON files
+
+Several files end in `.json`. They're just lists, but they're fussy about
+punctuation. Two rules will keep you out of trouble:
+
+- Every item except the **last** one ends with a comma.
+- Text always sits inside `"double quotes"`.
+
+If a page suddenly shows an error after you edit one, it's almost always a
+missing comma, an extra comma after the last item, or a missing quote mark.
+Paste the file into https://jsonlint.com and it will point at the line.
+
+If your text needs to contain a double quote, write `\"` instead of `"`.
+
+---
+
+## 3. Editing the content
+
+### The letter
+
+Open `content/letter.md` and type. It's just text.
+
+**Leave a blank line between paragraphs.** That blank line is what creates a new
+paragraph on the page — without one, everything runs together as a single block.
+
+```
+My love,
+
+This is the second paragraph, because there's an empty line above it.
+
+And this is the third.
+```
+
+### Adding or removing photos
+
+1. Put the photo file into `public/photos/`.
+2. Open `content/album.json` and add a line for it:
+
+```json
+[
+  { "file": "beach.jpg", "caption": "That trip in July" },
+  { "file": "kitchen.jpg", "caption": "" }
+]
+```
+
+- `file` must match the filename **exactly**, including capital letters and the
+  `.jpg` or `.png` at the end.
+- `caption` can be left as `""` for no caption.
+
+To remove a photo, delete its line (and mind the commas — see section 2).
+
+The placeholder pictures that came with the site are the `photo-1.svg` through
+`photo-6.svg` entries. Delete those lines once you've added real ones.
+
+### Adding or removing post-it messages
+
+Open `content/post-its.json`. It's a plain list of messages:
+
+```json
+[
+  "The way you laugh at your own jokes",
+  "beso",
+  "ti amo"
+]
+```
+
+Add as many as you like. The wall shuffles them and won't repeat a message
+until it has used all of them, so the more you add, the better it feels.
+
+### Adding or removing date ideas
+
+Open `content/date-ideas.json`. Each idea looks like this:
+
+```json
+{
+  "title": "Rooftop picnic",
+  "mood": "cozy",
+  "location": "outdoor",
+  "budget": "low",
+  "description": "Blanket, snacks, and whatever the sky is doing."
+}
+```
+
+`title` and `description` can say anything. The other three **must** be spelled
+exactly as one of these, or the idea won't be matched properly:
+
+- `mood`: `cozy`, `adventurous`, `romantic`, `silly`, `calm`
+- `location`: `indoor`, `outdoor`, `either`
+- `budget`: `low`, `medium`, `treat ourselves`
+
+`description` is optional — leave the whole line out if you don't want one.
+
+The form always finds something: if nothing matches all three answers, it picks
+the closest thing it can. Ideas are allowed to come up more than once.
+
+### Adding or removing screensavers
+
+1. Put the image into `public/screensavers/`.
+2. Add a line to `content/screensavers.json`:
+
+```json
+[
+  { "file": "lake.jpg", "title": "The lake" }
+]
+```
+
+These look best as tall, phone-shaped images (portrait, not landscape).
+
+### Changing the bouquet choices
+
+Open `content/bouquet-options.json` and edit the three lists.
+
+Note that the bouquet page is still a sketch — the real generator hasn't been
+built yet. When it is, it goes in one place only: `lib/bouquet.ts`, inside the
+function marked with a large comment saying exactly that.
+
+---
+
+## 4. Running it on your own computer
+
+You need Node.js installed (https://nodejs.org, the version marked "LTS").
+
+Open a terminal in this folder and run:
+
+```
+npm install
+```
+
+You only need that the first time (and again if you ever pull down changes).
+Then, every time you want to work on it:
+
+```
+npm run dev
+```
+
+Leave that running and open http://localhost:3000/album in your browser. Swap
+`/album` for any of the other six addresses. Edits to the content files show up
+as soon as you save — no need to restart anything.
+
+To stop it, press `Ctrl + C` in the terminal.
+
+---
+
+## 5. Putting changes live
+
+The site is hosted on Vercel. Once it's connected to a GitHub repository,
+deploying is just pushing your changes:
+
+```
+git add .
+git commit -m "Added new photos"
+git push
+```
+
+Vercel notices the push and rebuilds the site by itself, usually in under a
+minute. You can watch it happen at https://vercel.com/dashboard.
+
+If it isn't connected to GitHub yet, install the Vercel tool once with
+`npm install -g vercel`, then run `vercel --prod` from this folder.
+
+**If a deploy fails**, the most common cause is a broken JSON file (section 2)
+or a photo filename that doesn't match what's written in the JSON — including
+capital letters. Vercel's servers care about capitalisation even though your own
+computer doesn't: to them, `Beach.JPG` and `beach.jpg` are two different files.
+
+---
+
+## 6. Changing where the date emails go
+
+The date page sends its answers through a free service called **Formspree**.
+
+1. Sign up at https://formspree.io and make a new form. It will ask which email
+   address should receive the messages.
+2. Formspree gives you a web address that looks like
+   `https://formspree.io/f/abcdwxyz`.
+3. Put it in the file named `.env.local` in this folder (create it by copying
+   `.env.example` if it isn't there):
+
+```
+NEXT_PUBLIC_FORMSPREE_ENDPOINT=https://formspree.io/f/abcdwxyz
+```
+
+4. Put **the same line** into Vercel, or it will only work on your own computer:
+   your project, then Settings, then Environment Variables. Add
+   `NEXT_PUBLIC_FORMSPREE_ENDPOINT` with that value, then redeploy.
+
+To change the destination address later, change it in the Formspree dashboard —
+you don't need to touch the site at all.
+
+**If this isn't set up yet**, the date page still works: it picks an idea and
+shows it to her, and simply says the message couldn't be sent. Nothing crashes.
+
+---
+
+## 7. Adding a new page later
+
+Say you want `/anniversary` next year.
+
+1. Make a new folder: `app/anniversary/`
+2. Inside it, make a file called `page.tsx` containing:
+
+```tsx
+import PageShell from "@/components/PageShell";
+
+export default function AnniversaryPage() {
+  return (
+    <PageShell title="Happy anniversary" subtitle="year two">
+      <p>Whatever you want to say here.</p>
+    </PageShell>
+  );
+}
+```
+
+3. It's live at `/anniversary` straight away. Write that address to a new NFC
+   sticker.
+
+Using `PageShell` is what keeps a new page looking like the rest of the site.
+The folder name **is** the web address, so name it carefully the first time.
+
+---
+
+## 8. Things that will bite you
+
+**Don't rename the route folders.** `album`, `letter`, `date`, `bouquet`,
+`postits`, `surprise`, `screensavers` — the NFC stickers are physically
+programmed to point at those exact addresses. Renaming a folder makes its
+sticker lead to a dead page, and you can't fix that from in here; you'd have to
+rewrite the sticker itself.
+
+**Compress photos before adding them.** A photo straight off a phone can be
+8 MB, which is painfully slow over mobile data. Aim for **under 300 KB each** —
+around 1600 pixels on the long edge is plenty. https://squoosh.app does this in
+the browser for free, and the difference is invisible on a phone screen.
+
+**Keep filenames lowercase with no spaces.** `sunset-beach.jpg`, not
+`Sunset Beach.JPG`. Spaces and capital letters are the single most common cause
+of "it works on my computer but not on the real site."
+
+**Don't delete `content/letter.md`.** An empty letter is fine; a missing file
+stops the whole site from building.
+
+**The post-it wall forgetting everything is intentional.** Notes vanish when the
+page is closed. That's by design, not a bug.
+
+**Everything is readable by anyone with the link.** There's no password. The
+addresses aren't secret, they're just unlisted and hidden from Google. Don't put
+anything in here you'd mind a stranger reading if they guessed an address.

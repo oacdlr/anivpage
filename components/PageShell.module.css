@@ -1,0 +1,33 @@
+.shell {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 36px var(--page-pad) 56px;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.wide {
+  max-width: 900px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 26px;
+}
+
+.title {
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}

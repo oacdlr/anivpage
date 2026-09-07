@@ -1,0 +1,107 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.group {
+  background: var(--surface);
+  border: none;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 18px 16px 16px;
+  margin: 0;
+}
+
+.legend {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.2rem;
+  color: var(--blue-deep);
+  padding: 0 6px;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.choice {
+  border: 1.5px solid var(--blue-soft);
+  background: #fff;
+  border-radius: 999px;
+  padding: 10px 17px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  transition: all 0.16s ease;
+}
+
+.choice:active {
+  transform: scale(0.95);
+}
+
+.choiceOn {
+  background: var(--leaf);
+  border-color: var(--leaf);
+  color: #fff;
+}
+
+.submit {
+  align-self: center;
+  min-width: 220px;
+  background: var(--leaf);
+}
+
+/* ---------------- Result panel ---------------- */
+
+.result {
+  margin-top: 26px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 28px 22px;
+  text-align: center;
+  animation: rise 0.45s ease;
+}
+
+.stems {
+  font-size: 2.4rem;
+  line-height: 1.3;
+  margin-bottom: 12px;
+  word-break: break-word;
+}
+
+.stem {
+  display: inline-block;
+  animation: sway 3s ease-in-out infinite;
+}
+
+.name {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.8rem;
+  margin: 0 0 6px;
+  text-transform: capitalize;
+}
+
+.desc {
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.placeholderNote {
+  margin-top: 18px;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  opacity: 0.75;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes sway {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}

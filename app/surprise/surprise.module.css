@@ -1,0 +1,210 @@
+.stage {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* ---------------- The idle tap target ---------------- */
+
+.bud {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border: none;
+  background: none;
+  padding: 0;
+  z-index: 2;
+  animation: breathe 3s ease-in-out infinite;
+}
+
+.budCircle {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, var(--petal) 70%);
+  box-shadow: 0 10px 34px rgba(217, 143, 168, 0.45);
+  display: grid;
+  place-items: center;
+  font-size: 2.6rem;
+}
+
+.ring {
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  border: 2px solid var(--petal);
+  opacity: 0.5;
+  animation: ripple 2.6s ease-out infinite;
+}
+
+.label {
+  position: absolute;
+  top: calc(50% + 96px);
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 1rem;
+  z-index: 2;
+}
+
+/* ---------------- The bloom ---------------- */
+
+.flower {
+  position: relative;
+  width: 0;
+  height: 0;
+  z-index: 2;
+}
+
+.stem {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 7px;
+  height: 190px;
+  margin-left: -3.5px;
+  background: linear-gradient(180deg, var(--leaf), #8fb69a);
+  border-radius: 4px;
+  transform-origin: top center;
+  animation: grow 0.75s cubic-bezier(0.3, 0.9, 0.4, 1) both;
+}
+
+.leaf {
+  --leafAngle: 0deg;
+  position: absolute;
+  left: 50%;
+  top: 96px;
+  width: 58px;
+  height: 30px;
+  background: var(--leaf);
+  border-radius: 0 100% 0 100%;
+  transform-origin: left center;
+  animation: leafOut 0.55s ease both;
+  animation-delay: 0.55s;
+}
+
+.leafRight {
+  --leafAngle: 18deg;
+}
+
+.leafLeft {
+  left: auto;
+  right: 50%;
+  border-radius: 100% 0 100% 0;
+  transform-origin: right center;
+  --leafAngle: -18deg;
+  animation-delay: 0.68s;
+}
+
+.petal {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 46px;
+  height: 78px;
+  margin-left: -23px;
+  margin-top: -78px;
+  border-radius: 50% 50% 45% 45%;
+  background: linear-gradient(180deg, #fff 0%, var(--petal) 55%, var(--petal-deep) 100%);
+  transform-origin: 50% 100%;
+  box-shadow: inset 0 -6px 12px rgba(217, 143, 168, 0.35);
+  /* The resting state is already fanned out, so the petal keeps its angle
+     once the animation finishes. "both" holds the start frame before it. */
+  transform: rotate(var(--angle));
+  animation: unfurl 0.62s cubic-bezier(0.34, 1.3, 0.5, 1) both;
+}
+
+.core {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #fff8dc, var(--butter) 60%, #e8d08a 100%);
+  box-shadow: 0 3px 10px rgba(47, 59, 82, 0.18);
+  animation: pop 0.5s cubic-bezier(0.34, 1.5, 0.5, 1) both;
+}
+
+.scattering .petal {
+  animation: scatter 1.4s ease-in forwards;
+}
+
+.scattering .core {
+  animation: fadeAway 1.2s ease forwards;
+}
+
+.scattering .stem,
+.scattering .leaf {
+  animation: fadeAway 1s ease forwards;
+}
+
+.replay {
+  position: fixed;
+  bottom: calc(30px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  animation: fadeIn 0.5s ease backwards;
+}
+
+@keyframes grow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+@keyframes leafOut {
+  from { opacity: 0; transform: rotate(var(--leafAngle)) scale(0.2); }
+  to { opacity: 1; transform: rotate(var(--leafAngle)) scale(1); }
+}
+
+@keyframes unfurl {
+  from { opacity: 0; transform: rotate(var(--angle)) scale(0.1); }
+  to { opacity: 1; transform: rotate(var(--angle)) scale(1); }
+}
+
+@keyframes pop {
+  from { opacity: 0; transform: scale(0); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes scatter {
+  to {
+    opacity: 0;
+    transform: rotate(var(--angle)) translate(var(--flyX), var(--flyY)) scale(0.5);
+  }
+}
+
+@keyframes fadeAway {
+  to { opacity: 0; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+@keyframes ripple {
+  0% { transform: scale(0.9); opacity: 0.55; }
+  100% { transform: scale(1.7); opacity: 0; }
+}

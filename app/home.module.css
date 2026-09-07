@@ -1,0 +1,37 @@
+.wrap {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 30px;
+  text-align: center;
+}
+
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 46px 30px;
+  max-width: 380px;
+  animation: rise 0.6s ease;
+}
+
+.mark {
+  font-size: 2.6rem;
+  margin-bottom: 10px;
+  animation: sway 4s ease-in-out infinite;
+}
+
+.line {
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes sway {
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(6deg); }
+}

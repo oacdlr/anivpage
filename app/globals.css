@@ -1,0 +1,134 @@
+/* =========================================================================
+   SHARED THEME — every page on the site uses these values.
+   Change a color here and it changes everywhere at once.
+   ========================================================================= */
+
+:root {
+  /* --- Colors ---------------------------------------------------------- */
+  --bg: #f2f7fc;          /* soft sky — the page background */
+  --bg-deep: #e6eff9;     /* slightly deeper sky, for gradients */
+  --surface: #ffffff;     /* cards, letters, post-its */
+  --ink: #2f3b52;         /* main text — deep slate blue */
+  --ink-soft: #6b7b94;    /* secondary text */
+  --blue: #8aa9d6;        /* primary accent */
+  --blue-deep: #5c7cb0;   /* accent for text on light backgrounds */
+  --blue-soft: #dbe7f6;   /* pale blue fill */
+  --petal: #f3c6d5;       /* blush pink */
+  --petal-deep: #d98fa8;
+  --leaf: #a8c8b0;        /* sage green */
+  --butter: #f7e6b8;      /* pale yellow */
+  --lilac: #d8cdea;       /* soft lilac */
+
+  /* --- Shape & depth --------------------------------------------------- */
+  --radius: 18px;
+  --radius-sm: 10px;
+  --shadow-sm: 0 2px 10px rgba(47, 59, 82, 0.08);
+  --shadow: 0 8px 30px rgba(47, 59, 82, 0.12);
+  --shadow-lg: 0 20px 60px rgba(47, 59, 82, 0.18);
+
+  /* --- Spacing --------------------------------------------------------- */
+  --page-pad: 20px;
+  --max-w: 640px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  background-image:
+    radial-gradient(circle at 12% 8%, rgba(243, 198, 213, 0.35), transparent 42%),
+    radial-gradient(circle at 88% 12%, rgba(216, 205, 234, 0.35), transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(168, 200, 176, 0.28), transparent 55%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: var(--font-body), system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  /* Stops the whole page rubber-banding on iOS while tapping around. */
+  overscroll-behavior-y: none;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 500;
+  line-height: 1.15;
+  margin: 0 0 0.4em;
+  letter-spacing: 0.01em;
+}
+
+h1 {
+  font-size: clamp(2rem, 9vw, 2.8rem);
+}
+
+h2 {
+  font-size: clamp(1.4rem, 6vw, 1.8rem);
+}
+
+p {
+  margin: 0 0 1em;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* Shared button look, used on several pages. */
+.btn {
+  border: none;
+  border-radius: 999px;
+  padding: 14px 30px;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: var(--blue);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.btn-soft {
+  background: var(--surface);
+  color: var(--blue-deep);
+  border: 1.5px solid var(--blue-soft);
+}
+
+/* Respect a phone set to "reduce motion" — animations become instant. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

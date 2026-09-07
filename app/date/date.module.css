@@ -1,0 +1,167 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.group {
+  background: var(--surface);
+  border: none;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 18px 16px 16px;
+  margin: 0;
+}
+
+.legend {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.2rem;
+  color: var(--blue-deep);
+  padding: 0 6px;
+  margin-bottom: 4px;
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.choice {
+  border: 1.5px solid var(--blue-soft);
+  background: #fff;
+  border-radius: 999px;
+  padding: 10px 17px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  transition: all 0.16s ease;
+}
+
+.choice:active {
+  transform: scale(0.95);
+}
+
+.choiceOn {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.note {
+  width: 100%;
+  border: 1.5px solid var(--blue-soft);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--ink);
+  resize: vertical;
+  min-height: 80px;
+  background: #fff;
+}
+
+.note:focus {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+.submit {
+  align-self: center;
+  min-width: 220px;
+}
+
+/* ---------------- Result ---------------- */
+
+.result {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 0;
+  animation: rise 0.5s ease;
+}
+
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 34px 24px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::after {
+  content: "";
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: var(--petal);
+  opacity: 0.3;
+}
+
+.eyebrow {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.ideaTitle {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.7rem, 8vw, 2.3rem);
+  line-height: 1.2;
+  margin: 0 0 10px;
+  color: var(--ink);
+  position: relative;
+}
+
+.ideaDesc {
+  color: var(--ink-soft);
+  margin: 0 0 14px;
+  position: relative;
+}
+
+.tags {
+  display: flex;
+  gap: 7px;
+  justify-content: center;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+.tag {
+  background: var(--blue-soft);
+  color: var(--blue-deep);
+  border-radius: 999px;
+  padding: 5px 13px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.status {
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.statusWarn {
+  color: #b26a4a;
+}
+
+.empty {
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
