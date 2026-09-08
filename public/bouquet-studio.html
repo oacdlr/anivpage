@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Flower Room</title>
+<!-- This page is served at /bouquet by a rewrite in next.config.ts, so it never
+     passes through app/layout.tsx. The two tags below are what the layout would
+     otherwise have given it: keep them in step with app/layout.tsx. -->
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#f2f7fc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* These mirror the site's shared theme in app/globals.css. This page is a
+     standalone file, so it can't read those variables — if you change a colour
+     there, change its twin here too. */
+  :root{
+    color-scheme: light;
+    --sky:#f2f7fc;          /* --bg      : the page background */
+    --sky-deep:#e6eff9;     /* --bg-deep : deeper sky, for gradients */
+    --surface:#ffffff;      /* --surface : the controls panel */
+    --blue:#8aa9d6;         /* --blue    : primary accent */
+    --blue-deep:#5c7cb0;    /* --blue-deep: accent text on light */
+    --blue-soft:#dbe7f6;    /* --blue-soft: pale blue fill */
+    --blue-dim:rgba(138,169,214,.42);
+    --blue-faint:rgba(138,169,214,.18);
+    --petal:#f3c6d5;
+    --petal-deep:#d98fa8;
+    --leaf:#a8c8b0;
+    --ink:#2f3b52;          /* --ink     : main text */
+    --ink-soft:#6b7b94;     /* --ink-soft: secondary text */
+    --hair:rgba(47,59,82,.10);
+    --sans:'Quicksand',system-ui,-apple-system,'Segoe UI',sans-serif;
+    --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--sky);color:var(--ink);
+    font-family:var(--sans);font-weight:400;-webkit-font-smoothing:antialiased;
+    overflow:hidden;
+  }
+  #app{display:flex;height:100vh;height:100dvh;width:100%}
+
+  /* ---------- stage ---------- */
+  #stage{position:relative;flex:1 1 auto;min-width:0;background:
+    radial-gradient(circle at 12% 8%, rgba(243,198,213,.35), transparent 42%),
+    radial-gradient(circle at 88% 12%, rgba(216,205,234,.35), transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(168,200,176,.28), transparent 55%),
+    linear-gradient(180deg, var(--sky) 0%, var(--sky-deep) 100%);}
+  #scene{display:block;width:100%;height:100%}
+  #overlay{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    flex-direction:column;gap:14px;background:rgba(242,247,252,.92);
+    font-family:var(--serif);font-style:italic;font-size:19px;letter-spacing:.02em;
+    color:var(--ink-soft);transition:opacity .7s ease;z-index:4;
+  }
+  #overlay.gone{opacity:0;pointer-events:none}
+  .ring{width:34px;height:34px;border-radius:50%;border:1px solid var(--blue-dim);
+    border-top-color:var(--blue-deep);animation:spin 1.1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #hint{
+    position:absolute;left:50%;bottom:20px;transform:translateX(-50%);
+    font-size:11.5px;letter-spacing:.14em;color:var(--ink-soft);
+    pointer-events:none;transition:opacity .8s ease;white-space:nowrap;
+  }
+  #hint.gone{opacity:0}
+  #drift{
+    position:absolute;left:22px;bottom:20px;font-family:var(--serif);font-style:italic;
+    font-size:13px;color:var(--blue-deep);opacity:0;transition:opacity .9s ease;pointer-events:none;
+  }
+  #drift.on{opacity:.72}
+  #empty{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;
+    font-family:var(--serif);font-style:italic;font-size:17px;color:var(--ink-soft);
+    pointer-events:none;opacity:0;transition:opacity .5s ease;max-width:280px;line-height:1.6;
+  }
+  #empty.on{opacity:1}
+
+  /* ---------- menu toggle ---------- */
+  .menu-toggle{
+    position:absolute;top:22px;right:22px;z-index:5;display:flex;align-items:center;gap:10px;
+    padding:11px 18px 11px 15px;border-radius:999px;border:1px solid var(--blue-dim);
+    background:rgba(255,255,255,.75);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    color:var(--ink);font-family:var(--sans);font-size:11.5px;letter-spacing:.14em;
+    text-transform:uppercase;cursor:pointer;transition:border-color .25s ease,color .25s ease;
+  }
+  .menu-toggle:hover{border-color:var(--blue-deep);color:var(--blue-deep)}
+  .mt-ico{position:relative;width:15px;height:1px;background:currentColor;flex:none}
+  .mt-ico::before,.mt-ico::after{content:'';position:absolute;left:0;width:15px;height:1px;
+    background:currentColor;transition:transform .3s ease;}
+  .mt-ico::before{top:-5px}
+  .mt-ico::after{top:5px}
+  .menu-toggle.open .mt-ico{background:transparent}
+  .menu-toggle.open .mt-ico::before{transform:translateY(5px) rotate(45deg)}
+  .menu-toggle.open .mt-ico::after{transform:translateY(-5px) rotate(-45deg)}
+
+  /* ---------- panel ---------- */
+  #panel{
+    flex:0 0 380px;width:380px;height:100%;overflow-y:auto;overscroll-behavior:contain;
+    background:linear-gradient(180deg,var(--surface) 0%,#f7fafd 45%,#eef4fb 100%);
+    border-left:1px solid var(--blue-faint);
+    padding:30px 26px 40px;
+    transition:flex-basis .45s ease,width .45s ease,opacity .3s ease,padding .45s ease;
+  }
+  #panel.hidden{
+    flex:0 0 0;width:0;opacity:0;padding:30px 0 40px;overflow:hidden;
+    border-left-color:transparent;pointer-events:none;
+  }
+  #panel::-webkit-scrollbar{width:8px}
+  #panel::-webkit-scrollbar-thumb{background:rgba(138,169,214,.38);border-radius:8px}
+  .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+  .panel-close{
+    flex:none;width:30px;height:30px;border-radius:50%;border:1px solid var(--blue-dim);
+    background:transparent;color:var(--ink-soft);font-size:18px;line-height:1;cursor:pointer;
+    transition:color .2s ease,border-color .2s ease;
+  }
+  .panel-close:hover{color:var(--blue-deep);border-color:var(--blue-deep)}
+  .mark{font-family:var(--serif);font-style:italic;font-size:31px;line-height:1.1;
+    color:var(--blue-deep);margin:0}
+  .mark span{display:block;font-style:normal;font-family:var(--sans);font-weight:300;
+    font-size:11px;letter-spacing:.34em;color:var(--ink-soft);margin-top:9px;text-transform:uppercase}
+  .rule{height:1px;background:linear-gradient(90deg,var(--blue-dim),transparent);margin:22px 0 18px}
+  .tally{font-size:12.5px;color:var(--ink-soft);line-height:1.6}
+  .tally b{color:var(--ink);font-weight:500}
+  .warn{color:var(--petal-deep);font-size:11.5px;margin-top:6px;display:none}
+  .warn.on{display:block}
+
+  .group-title{font-family:var(--serif);font-style:italic;font-size:17px;color:var(--ink);
+    margin:26px 0 12px}
+
+  .stem-row{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:13px;
+    padding:9px 0;border-bottom:1px solid var(--hair)}
+  .stem-row:last-of-type{border-bottom:none}
+  .stem-name{font-size:14px;font-weight:400;letter-spacing:.01em}
+  .stem-row.zero .stem-name{color:var(--ink-soft)}
+
+  input[type=color]{-webkit-appearance:none;appearance:none;width:34px;height:34px;
+    border:none;background:none;padding:0;cursor:pointer;border-radius:50%}
+  input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+  input[type=color]::-webkit-color-swatch{border:1px solid var(--blue-dim);border-radius:50%}
+  input[type=color]::-moz-color-swatch{border:1px solid var(--blue-dim);border-radius:50%}
+  input[type=color]:focus-visible{outline:2px solid var(--blue-deep);outline-offset:3px}
+
+  .step{display:flex;align-items:center;gap:4px}
+  .step button{
+    width:27px;height:27px;border-radius:50%;border:1px solid var(--blue-dim);
+    background:transparent;color:var(--blue-deep);font-family:var(--sans);font-size:15px;line-height:1;
+    cursor:pointer;transition:background .18s ease,border-color .18s ease,color .18s ease;
+    display:flex;align-items:center;justify-content:center;padding:0;
+  }
+  .step button:hover:not(:disabled){background:rgba(138,169,214,.18);border-color:var(--blue-deep)}
+  .step button:disabled{opacity:.28;cursor:default}
+  .step button:focus-visible{outline:2px solid var(--blue-deep);outline-offset:2px}
+  .step .qty{width:26px;text-align:center;font-size:14px;font-variant-numeric:tabular-nums;
+    color:var(--ink)}
+  .step .qty.zero{color:rgba(47,59,82,.34)}
+
+  .slider{margin:18px 0 4px}
+  .slider .lbl{display:flex;justify-content:space-between;align-items:baseline;
+    font-size:12.5px;color:var(--ink-soft);margin-bottom:9px}
+  .slider .lbl b{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--blue-deep);
+    font-weight:500}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:2px;border-radius:2px;
+    background:linear-gradient(90deg,var(--blue) var(--fill,50%),rgba(47,59,82,.14) var(--fill,50%));
+    outline:none;cursor:pointer;margin:0;
+  }
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+    width:15px;height:15px;border-radius:50%;background:var(--blue-deep);
+    border:2px solid var(--surface);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;
+    background:var(--blue-deep);border:2px solid var(--surface);cursor:pointer}
+  input[type=range]:focus-visible{outline:2px solid var(--blue-deep);outline-offset:6px}
+
+  /* These two mirror .btn and .btn-soft in app/globals.css — pill shape,
+     --blue fill, white label — so the studio's buttons match every other page. */
+  .actions{margin-top:26px;display:flex;gap:10px}
+  #rebuild{
+    flex:1;padding:14px 10px;border:none;border-radius:999px;cursor:pointer;
+    background:var(--blue);
+    color:#fff;font-family:var(--sans);font-weight:600;font-size:12px;
+    letter-spacing:.16em;text-transform:uppercase;
+    box-shadow:0 2px 10px rgba(47,59,82,.08);
+    transition:filter .2s ease,transform .1s ease;
+  }
+  #rebuild:hover{filter:brightness(1.06)}
+  #rebuild:active{transform:scale(.97)}
+  #clear{
+    padding:14px 18px;border:1.5px solid var(--blue-soft);border-radius:999px;
+    background:var(--surface);
+    color:var(--blue-deep);font-family:var(--sans);font-weight:600;font-size:12px;letter-spacing:.1em;
+    cursor:pointer;transition:color .2s ease,border-color .2s ease;
+  }
+  #clear:hover{color:var(--ink);border-color:var(--blue)}
+  .text-link{
+    display:block;margin:14px 0 0;padding:0;border:none;background:none;
+    font-family:var(--serif);font-style:italic;font-size:13px;color:var(--blue-deep);
+    cursor:pointer;text-align:left;
+  }
+  .text-link:hover{color:var(--ink)}
+  button:focus-visible{outline:2px solid var(--blue-deep);outline-offset:2px}
+  .foot{margin-top:22px;font-size:11px;line-height:1.7;color:var(--ink-soft)}
+
+  @media (max-width:900px){
+    body{overflow:auto}
+    #app{flex-direction:column;height:auto}
+    #stage{height:58vh;flex:0 0 auto}
+    #panel{flex:1 1 auto;width:100%;height:auto;overflow:visible;
+      border-left:none;border-top:1px solid var(--blue-faint);padding:24px 20px 44px;
+      transition:max-height .45s ease,opacity .3s ease,padding .45s ease;max-height:2400px}
+    #panel.hidden{
+      flex:0 0 auto;width:100%;max-height:0;opacity:0;padding:0 20px;overflow:hidden;
+      border-top-color:transparent;
+    }
+    .menu-toggle{top:14px;right:14px}
+    #hint{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .ring{animation:none}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <main id="stage">
+    <canvas id="scene"></canvas>
+    <div id="empty">Choose a few stems to begin the arrangement.</div>
+    <div id="drift">drifting</div>
+    <div id="hint">DRAG TO ORBIT &nbsp;·&nbsp; SCROLL TO ZOOM</div>
+    <div id="overlay"><div class="ring"></div><div id="ovtext">Loading Environment…</div></div>
+    <button id="menuToggle" class="menu-toggle" type="button" aria-expanded="false" aria-controls="panel">
+      <span class="mt-ico" aria-hidden="true"></span>
+      <span class="mt-label">Arrange</span>
+    </button>
+  </main>
+
+  <aside id="panel" class="hidden">
+    <div class="panel-head">
+      <h1 class="mark">The Flower Room<span>Bouquet Studio</span></h1>
+      <button id="panelClose" class="panel-close" type="button" aria-label="Hide controls">×</button>
+    </div>
+    <div class="rule"></div>
+    <p class="tally"><b id="total">0</b> stems in hand · <span id="kinds">0</span> varieties</p>
+    <p class="warn" id="warn">Large arrangements may slow the preview.</p>
+
+    <h2 class="group-title">The flowers</h2>
+    <div id="list"></div>
+
+    <h2 class="group-title">The arrangement</h2>
+    <div class="slider">
+      <div class="lbl"><label for="density">Density &amp; fullness</label><b id="densityVal">65%</b></div>
+      <input id="density" type="range" min="10" max="100" step="1" value="65">
+    </div>
+    <div class="slider">
+      <div class="lbl"><label for="stem">Stem length</label><b id="stemVal">6</b></div>
+      <input id="stem" type="range" min="1" max="10" step="1" value="6">
+    </div>
+
+    <div class="actions">
+      <button id="rebuild">Rebuild arrangement</button>
+      <button id="clear">Empty</button>
+    </div>
+    <button id="oneEach" class="text-link">Start over with one of each</button>
+    <p class="foot">Every rebuild re-shuffles the placement, so the same stems never fall the same way twice.</p>
+  </aside>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/utils/BufferGeometryUtils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/MaskPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/SSAOPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/SSAOShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/GammaCorrectionShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/math/SimplexNoise.js"></script>
+
+<script>
+(function(){
+'use strict';
+
+/* ============================================================
+   0 · Guards
+   ============================================================ */
+const ov = document.getElementById('overlay');
+const ovText = document.getElementById('ovtext');
+if(!window.THREE){
+  ov.innerHTML = '<div style="max-width:320px;text-align:center;line-height:1.6">The 3D library could not be loaded. Check the network connection and reload.</div>';
+  return;
+}
+if(THREE.ColorManagement) THREE.ColorManagement.legacyMode = false;
+
+const MU = THREE.MathUtils;
+const UP = new THREE.Vector3(0,1,0);
+const GOLDEN = Math.PI * (3 - Math.sqrt(5));   // 2.39996…
+
+/* ============================================================
+   1 · Catalogue + state
+   ============================================================ */
+const FLOWERS = [
+  {id:'rose',        name:'Rose',          color:'#c2455f', scale:1.00, filler:false},
+  {id:'peony',       name:'Peony',         color:'#f0aebd', scale:1.16, filler:false},
+  {id:'tulip',       name:'Tulip',         color:'#e0563a', scale:1.02, filler:false},
+  {id:'ranunculus',  name:'Ranunculus',    color:'#f0a04b', scale:0.92, filler:false},
+  {id:'anemone',     name:'Anemone',       color:'#f6f1e7', scale:1.00, filler:false},
+  {id:'daisy',       name:'Daisy',         color:'#fdfbf4', scale:0.84, filler:false},
+  {id:'sunflower',   name:'Sunflower',     color:'#f0bf3f', scale:1.20, filler:false},
+  {id:'wildflower',  name:'Wildflower',    color:'#9b6cd4', scale:1.00, filler:true },
+  {id:'babysbreath', name:"Baby's Breath", color:'#fbf8f0', scale:1.05, filler:true },
+  {id:'eucalyptus',  name:'Eucalyptus',    color:'#8fae94', scale:1.10, filler:true }
+];
+const MAX_PER_TYPE = 15;
+
+const state = {
+  counts:{}, colors:{}, density:65, stem:6
+};
+FLOWERS.forEach(f=>{ state.counts[f.id]=0; state.colors[f.id]=f.color; });
+
+// Sets the arrangement to a single stem of every flower type — used for the
+// opening bouquet, and reusable any time the studio needs a clean starting mix.
+function initOneOfEach(){
+  FLOWERS.forEach(f=>{ state.counts[f.id] = 1; });
+}
+initOneOfEach();
+
+/* ============================================================
+   2 · Renderer, scene, camera
+   ============================================================ */
+const canvas = document.getElementById('scene');
+const stage  = document.getElementById('stage');
+
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false, powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, window.innerWidth<900?1.25:1.6));
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.82;   // the scene was lit for a dark backdrop;
+                                       // a pale one bounces far more light back
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#f2f7fc');   // --bg, matches the CSS stage
+scene.fog = new THREE.Fog(0xf2f7fc, 5.5, 17);    // must equal the background
+
+const camera = new THREE.PerspectiveCamera(38, 1, 0.05, 60);
+camera.position.set(1.05, 1.95, 3.5);
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.rotateSpeed = 0.62;
+controls.enablePan = false;
+controls.minDistance = 1.3;
+controls.maxDistance = 8;
+controls.minPolarAngle = 0.25;
+controls.maxPolarAngle = Math.PI * 0.52;
+controls.target.set(0, 1.5, 0);
+controls.update();
+
+/* ============================================================
+   3 · Lighting
+   ============================================================ */
+const key = new THREE.DirectionalLight(0xfff2dc, 1.35);
+key.position.set(2.8, 5.2, 3.2);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.radius = 3;
+key.shadow.bias = -0.0006;
+key.shadow.normalBias = 0.02;
+const sc = key.shadow.camera;
+sc.near = 0.5; sc.far = 14; sc.left = -3; sc.right = 3; sc.top = 4; sc.bottom = -1.5;
+sc.updateProjectionMatrix();
+scene.add(key);
+
+const fillA = new THREE.DirectionalLight(0xdbe7f6, 0.55);   // cool bounce, camera-left (--blue-soft)
+fillA.position.set(-4, 2.4, 1.6);
+scene.add(fillA);
+
+const fillB = new THREE.DirectionalLight(0xffe6b8, 0.5);    // warm rim from behind
+fillB.position.set(-0.6, 2.6, -4.2);
+scene.add(fillB);
+
+// Bounce off a pale room, not a dark one — otherwise undersides go muddy.
+scene.add(new THREE.HemisphereLight(0xffffff, 0xdbe7f6, 0.26));
+
+/* ============================================================
+   4 · Environment (HDRI → studio → gradient)
+   ============================================================ */
+const pmrem = new THREE.PMREMGenerator(renderer);
+pmrem.compileEquirectangularShader();
+let envDone = false;
+
+function finishEnv(){
+  if(envDone) return;
+  envDone = true;
+  ov.classList.add('gone');
+}
+
+function gradientEnv(){
+  // Guaranteed local fallback: a painted equirectangular sky, no network needed.
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 256;
+  const g = c.getContext('2d');
+  // A pale room, top to bottom. This feeds reflections as well as ambient light,
+  // so a dark ramp here leaves the petals looking dull whatever the background is.
+  const sky = g.createLinearGradient(0,0,0,256);
+  sky.addColorStop(0.00,'#ffffff');
+  sky.addColorStop(0.42,'#eaf1fa');
+  sky.addColorStop(0.52,'#d3e0ef');
+  sky.addColorStop(1.00,'#b9c8dc');
+  g.fillStyle = sky; g.fillRect(0,0,512,256);
+  const win = g.createRadialGradient(150,70,4,150,70,105);
+  win.addColorStop(0,'#ffffff'); win.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle = win; g.fillRect(0,0,512,256);
+  const warm = g.createRadialGradient(390,110,4,390,110,120);
+  warm.addColorStop(0,'rgba(255,226,175,.85)'); warm.addColorStop(1,'rgba(255,226,175,0)');
+  g.fillStyle = warm; g.fillRect(0,0,512,256);
+  const tex = new THREE.CanvasTexture(c);
+  tex.mapping = THREE.EquirectangularReflectionMapping;
+  const rt = pmrem.fromEquirectangular(tex);
+  scene.environment = rt.texture;
+  tex.dispose();
+}
+
+function studioEnv(){
+  if(typeof THREE.RoomEnvironment !== 'function') { gradientEnv(); return; }
+  try{
+    const room = new THREE.RoomEnvironment(renderer);
+    const rt = pmrem.fromScene(room, 0.04);
+    scene.environment = rt.texture;
+    room.traverse(o=>{ if(o.geometry) o.geometry.dispose(); if(o.material) o.material.dispose(); });
+  }catch(e){ gradientEnv(); }
+}
+
+function loadEnvironment(){
+  // This page is opened by tapping an NFC sticker, usually on mobile data, so it
+  // deliberately fetches NO environment map. RoomEnvironment is generated on the
+  // device in a few milliseconds and its bright white room suits the light theme
+  // better than an outdoor HDRI would — the page is interactive immediately
+  // instead of sitting on a spinner.
+  studioEnv();
+  finishEnv();
+}
+
+/* ============================================================
+   5 · Shared materials
+   ============================================================ */
+const petalMat = new THREE.MeshPhysicalMaterial({
+  color: 0xffffff, vertexColors: true, side: THREE.DoubleSide,
+  roughness: 0.42, metalness: 0.0,
+  transmission: 0.6, thickness: 0.32, ior: 1.36,
+  clearcoat: 0.55, clearcoatRoughness: 0.45,
+  sheen: 0.8, sheenColor: new THREE.Color(0xfff3e2), sheenRoughness: 0.7,
+  envMapIntensity: 0.55
+});
+const coreMat = new THREE.MeshPhysicalMaterial({
+  color: 0xffffff, vertexColors: true,
+  roughness: 0.78, metalness: 0.0, clearcoat: 0.2, envMapIntensity: 0.85
+});
+const stemMat = new THREE.MeshPhysicalMaterial({
+  color: 0x7fa382, roughness: 0.62, metalness: 0.0,   // sage-leaning green
+  clearcoat: 0.3, clearcoatRoughness: 0.5, transparent: true, opacity: 0
+});
+
+/* ============================================================
+   6 · Vase, ground
+   ============================================================ */
+const VASE_H = 0.92, VASE_TOP_R = 0.30, VASE_BOT_R = 0.255;
+
+const vaseGroup = new THREE.Group();
+const vaseMat = new THREE.MeshPhysicalMaterial({
+  color: 0xf4f8fc, roughness: 0.11, metalness: 0.0,   // porcelain, like --surface
+  clearcoat: 1.0, clearcoatRoughness: 0.04, envMapIntensity: 1.35, side: THREE.DoubleSide
+});
+const vaseBody = new THREE.Mesh(
+  new THREE.CylinderGeometry(VASE_TOP_R, VASE_BOT_R, VASE_H, 64, 1, false), vaseMat);
+vaseBody.position.y = VASE_H/2;
+vaseBody.castShadow = true; vaseBody.receiveShadow = true;
+vaseGroup.add(vaseBody);
+
+const rimMat = new THREE.MeshStandardMaterial({color:0xaebfd6, metalness:1.0, roughness:0.28, envMapIntensity:1.4});
+const rim = new THREE.Mesh(new THREE.TorusGeometry(VASE_TOP_R, 0.012, 12, 64), rimMat);
+rim.rotation.x = Math.PI/2; rim.position.y = VASE_H;
+rim.castShadow = true;
+vaseGroup.add(rim);
+
+const plug = new THREE.Mesh(new THREE.CircleGeometry(VASE_TOP_R*0.98, 48),
+  new THREE.MeshStandardMaterial({color:0x9fb3cc, roughness:0.9}));
+plug.rotation.x = -Math.PI/2; plug.position.y = VASE_H - 0.10;
+vaseGroup.add(plug);
+scene.add(vaseGroup);
+
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(40,40),
+  new THREE.ShadowMaterial({opacity:0.20}));
+ground.rotation.x = -Math.PI/2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+/* ============================================================
+   7 · Procedural petal geometry
+   ------------------------------------------------------------
+   A PlaneGeometry whose vertices are pushed through a width
+   profile (sine), a cup (quadratic across the width), a curl
+   (quadratic along the length) and a ripple, so every petal is
+   an organic, cupped surface rather than a flat card.
+   ============================================================ */
+function makePetal(o){
+  const w = o.w, h = o.h;
+  const cup    = o.cup    !== undefined ? o.cup    : 1.0;
+  const curl   = o.curl   !== undefined ? o.curl   : 0.4;
+  const ripple = o.ripple !== undefined ? o.ripple : 0.04;
+  const shape  = o.shape  !== undefined ? o.shape  : 1.2;  // >1 rounder toward tip
+  const round  = o.round  !== undefined ? o.round  : 0.6;  // tip bluntness
+  const twist  = o.twist  !== undefined ? o.twist  : 0;
+  const waves  = o.waves  !== undefined ? o.waves  : 2.5;
+  const sw = o.sw || 5, sh = o.sh || 9;
+
+  const g = new THREE.PlaneGeometry(1, 1, sw, sh);
+  const p = g.attributes.position;
+  for(let i=0;i<p.count;i++){
+    const u = p.getX(i) * 2;        // -1 … 1 across the petal
+    const v = p.getY(i) + 0.5;      //  0 … 1 base → tip
+    const prof = Math.pow(Math.abs(Math.sin(Math.PI * Math.pow(v, shape))), round);
+    let x = u * 0.5 * w * prof;
+    let y = v * h;
+    let z = cup * (x*x) / Math.max(w, 0.001) * 1.7
+          + curl * h * v * v * 0.65
+          + ripple * Math.sin(u * Math.PI * waves) * v * v;
+    if(twist){
+      const a = twist * v, cs = Math.cos(a), sn = Math.sin(a);
+      const nx = x*cs - z*sn; z = x*sn + z*cs; x = nx;
+    }
+    p.setXYZ(i, x, y, z);
+  }
+  g.computeVertexNormals();
+  return g;
+}
+
+// final = Ty(y) · Ry(angle) · Tz(radius) · Rx(tilt) · Ry(spin) · S(scale)
+const _m = new THREE.Matrix4(), _t = new THREE.Matrix4();
+function place(geo, o){
+  const m = _m.makeRotationY(o.angle || 0);
+  m.multiply(_t.makeTranslation(0, 0, o.radius || 0));
+  m.multiply(_t.makeRotationX(o.tilt || 0));
+  if(o.spin) m.multiply(_t.makeRotationY(o.spin));
+  const s = o.scale === undefined ? 1 : o.scale;
+  if(s !== 1) m.multiply(_t.makeScale(s, s, s));
+  const full = new THREE.Matrix4().makeTranslation(0, o.y || 0, 0).multiply(m);
+  geo.applyMatrix4(full);
+  return geo;
+}
+
+// vertex tint: per-part brightness jitter + darker toward the petal base
+const _c = new THREE.Color();
+function tint(geo, color, jitter, gradient){
+  const n = geo.attributes.position.count;
+  const uv = geo.attributes.uv;
+  const arr = new Float32Array(n*3);
+  const j = 1 + (Math.random()-0.5) * (jitter === undefined ? 0.16 : jitter);
+  const gr = gradient === undefined ? 0.3 : gradient;
+  _c.copy(color).multiplyScalar(j);
+  for(let i=0;i<n;i++){
+    const v = uv ? uv.getY(i) : 1;
+    const k = (1 - gr) + gr * v;
+    arr[i*3]   = _c.r * k;
+    arr[i*3+1] = _c.g * k;
+    arr[i*3+2] = _c.b * k;
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(arr, 3));
+  return geo;
+}
+
+function ball(r, sx, sy, sz, x, y, z){
+  const g = new THREE.SphereGeometry(r, 10, 8);
+  g.scale(sx, sy, sz);
+  g.translate(x, y, z);
+  return g;
+}
+const _va = new THREE.Vector3(), _vb = new THREE.Vector3(), _q = new THREE.Quaternion();
+function rod(a, b, r0, r1, seg){
+  const dir = _va.copy(b).sub(a);
+  const len = dir.length() || 0.001;
+  const g = new THREE.CylinderGeometry(r1, r0, len, seg || 6, 1, false);
+  g.translate(0, len/2, 0);
+  _q.setFromUnitVectors(UP, _vb.copy(dir).normalize());
+  g.applyQuaternion(_q);
+  g.translate(a.x, a.y, a.z);
+  return g;
+}
+
+/* ============================================================
+   8 · Flower models  (petals[] use petalMat, cores[] use coreMat)
+   ============================================================ */
+const DARK_EYE   = new THREE.Color('#241a12');
+const SUN_EYE    = new THREE.Color('#4a2f18');
+const DAISY_EYE  = new THREE.Color('#e8b53f');
+const POLLEN     = new THREE.Color('#e9d18a');
+const STALK      = new THREE.Color('#5d8452');
+
+function fRose(c, d){
+  const petals = [];
+  const n = Math.round(MU.lerp(15, 30, d));
+  for(let i=0;i<n;i++){
+    const t = n === 1 ? 0 : i/(n-1);
+    const g = makePetal({
+      w: MU.lerp(0.15, 0.34, t), h: MU.lerp(0.19, 0.34, t),
+      cup: MU.lerp(1.9, 0.75, t), curl: MU.lerp(-0.5, 0.55, t),
+      ripple: 0.015 + 0.05*t, shape: 1.5, round: 0.55, twist: 0.55*(1-t)
+    });
+    place(g, {
+      radius: 0.015 + 0.185*Math.pow(t, 0.85), angle: i*GOLDEN,
+      tilt: MU.lerp(0.10, 1.30, Math.pow(t, 0.85)),
+      y: MU.lerp(0.15, 0.0, Math.pow(t, 0.6))
+    });
+    petals.push(tint(g, c, 0.14, 0.34));
+  }
+  return {petals, cores: []};
+}
+
+function fPeony(c, d){
+  const petals = [];
+  const n = Math.round(MU.lerp(24, 44, d));
+  for(let i=0;i<n;i++){
+    const t = n === 1 ? 0 : i/(n-1);
+    const g = makePetal({
+      w: MU.lerp(0.11, 0.36, t), h: MU.lerp(0.13, 0.30, t),
+      cup: MU.lerp(2.1, 1.0, t), curl: MU.lerp(-0.35, 0.30, t),
+      ripple: 0.05 + 0.09*t, waves: 4.0, shape: 1.75, round: 0.5,
+      twist: 0.7*(1-t)*(i%2?1:-1)
+    });
+    place(g, {
+      radius: 0.012 + 0.20*Math.pow(t, 0.8), angle: i*GOLDEN,
+      tilt: MU.lerp(0.05, 1.42, Math.pow(t, 0.75)),
+      y: MU.lerp(0.16, -0.01, Math.pow(t, 0.55)),
+      spin: (Math.random()-0.5)*0.3
+    });
+    petals.push(tint(g, c, 0.18, 0.4));
+  }
+  return {petals, cores: []};
+}
+
+function fTulip(c, d){
+  const petals = [];
+  const rings = [
+    {n:3, r:0.055, tilt:0.20, h:0.42, w:0.30, off:0},
+    {n:3, r:0.075, tilt:0.30, h:0.38, w:0.28, off:Math.PI/3}
+  ];
+  rings.forEach((ring, ri)=>{
+    for(let i=0;i<ring.n;i++){
+      const g = makePetal({
+        w: ring.w, h: ring.h, cup: 2.3, curl: -0.22,
+        ripple: 0.02, shape: 1.45, round: 0.62, sh: 11
+      });
+      place(g, {radius: ring.r, angle: ring.off + i*(2*Math.PI/ring.n), tilt: ring.tilt, y: 0.015});
+      petals.push(tint(g, c, 0.12 + ri*0.04, 0.42));
+    }
+  });
+  const cores = [tint(ball(0.028, 1, 1.6, 1, 0, 0.10, 0), POLLEN, 0.1, 0.2)];
+  return {petals, cores};
+}
+
+function fRanunculus(c, d){
+  const petals = [];
+  const n = Math.round(MU.lerp(26, 46, d));
+  for(let i=0;i<n;i++){
+    const t = n === 1 ? 0 : i/(n-1);
+    const g = makePetal({
+      w: MU.lerp(0.09, 0.21, t), h: MU.lerp(0.09, 0.17, t),
+      cup: MU.lerp(1.7, 1.1, t), curl: MU.lerp(-0.15, 0.12, t),
+      ripple: 0.012, shape: 1.9, round: 0.45, sw: 4, sh: 6
+    });
+    place(g, {
+      radius: 0.010 + 0.155*Math.pow(t, 0.75), angle: i*GOLDEN,
+      tilt: MU.lerp(0.12, 1.48, Math.pow(t, 0.7)),
+      y: MU.lerp(0.11, 0.0, Math.pow(t, 0.5))
+    });
+    petals.push(tint(g, c, 0.2, 0.32));
+  }
+  return {petals, cores: []};
+}
+
+function fAnemone(c, d){
+  const petals = [];
+  const n = Math.round(MU.lerp(6, 9, d));
+  for(let i=0;i<n;i++){
+    const g = makePetal({
+      w: 0.27, h: 0.30, cup: 0.85, curl: 0.10, ripple: 0.03,
+      shape: 1.7, round: 0.5
+    });
+    place(g, {radius: 0.045, angle: i*(2*Math.PI/n) + Math.random()*0.1, tilt: 1.16, y: 0.012});
+    petals.push(tint(g, c, 0.13, 0.3));
+  }
+  const cores = [tint(ball(0.072, 1, 0.62, 1, 0, 0.028, 0), DARK_EYE, 0.08, 0.15)];
+  const st = Math.round(MU.lerp(10, 18, d));
+  for(let i=0;i<st;i++){
+    const a = i*GOLDEN, r = 0.055 + Math.random()*0.035;
+    cores.push(tint(ball(0.010, 1, 1, 1, Math.cos(a)*r, 0.05, Math.sin(a)*r), DARK_EYE, 0.3, 0.1));
+  }
+  return {petals, cores};
+}
+
+function fDaisy(c, d){
+  const petals = [];
+  const n = Math.round(MU.lerp(14, 22, d));
+  for(let i=0;i<n;i++){
+    const g = makePetal({
+      w: 0.078, h: 0.25, cup: 0.55, curl: 0.14, ripple: 0.008,
+      shape: 1.5, round: 0.45, sw: 3, sh: 7
+    });
+    place(g, {radius: 0.048, angle: i*(2*Math.PI/n) + (Math.random()-0.5)*0.08,
+      tilt: 1.30 + (Math.random()-0.5)*0.12, y: 0.008});
+    petals.push(tint(g, c, 0.1, 0.28));
+  }
+  const cores = [tint(ball(0.055, 1, 0.6, 1, 0, 0.022, 0), DAISY_EYE, 0.08, 0.2)];
+  return {petals, cores};
+}
+
+function fSunflower(c, d){
+  const petals = [];
+  const rings = [{n:Math.round(MU.lerp(11,15,d)), tilt:1.02, h:0.34, w:0.115, r:0.155},
+                 {n:Math.round(MU.lerp(9,13,d)),  tilt:1.28, h:0.29, w:0.10,  r:0.14}];
+  rings.forEach((ring, ri)=>{
+    for(let i=0;i<ring.n;i++){
+      const g = makePetal({
+        w: ring.w, h: ring.h, cup: 0.7, curl: 0.22, ripple: 0.02,
+        shape: 1.15, round: 0.45, sw: 3, sh: 8
+      });
+      place(g, {radius: ring.r, angle: i*(2*Math.PI/ring.n) + ri*0.28,
+        tilt: ring.tilt + (Math.random()-0.5)*0.14, y: 0.01 + ri*0.006});
+      petals.push(tint(g, c, 0.14, 0.3));
+    }
+  });
+  const cores = [tint(ball(0.155, 1, 0.30, 1, 0, 0.018, 0), SUN_EYE, 0.06, 0.25)];
+  const seeds = Math.round(MU.lerp(28, 52, d));
+  for(let i=0;i<seeds;i++){
+    const t = (i+0.5)/seeds, a = i*GOLDEN, r = 0.148*Math.sqrt(t);
+    cores.push(tint(ball(0.013, 1, 0.7, 1, Math.cos(a)*r, 0.036 - r*0.06, Math.sin(a)*r),
+      DARK_EYE, 0.35, 0.1));
+  }
+  return {petals, cores};
+}
+
+function fWildflower(c, d){
+  const petals = [], cores = [];
+  const blooms = Math.round(MU.lerp(4, 7, d));
+  for(let b=0;b<blooms;b++){
+    const a = b*GOLDEN + Math.random()*0.4;
+    const r = 0.055 + Math.random()*0.10;
+    const h = 0.12 + Math.random()*0.16;
+    const tip = new THREE.Vector3(Math.cos(a)*r, h, Math.sin(a)*r);
+    cores.push(tint(rod(new THREE.Vector3(0,0,0), tip, 0.008, 0.005, 5), STALK, 0.14, 0.2));
+    const pn = 5;
+    for(let i=0;i<pn;i++){
+      const g = makePetal({w:0.075, h:0.085, cup:0.9, curl:0.05, ripple:0.006,
+        shape:1.8, round:0.45, sw:3, sh:4});
+      place(g, {radius:0.016, angle:i*(2*Math.PI/pn), tilt:1.15, y:0});
+      g.translate(tip.x, tip.y, tip.z);
+      petals.push(tint(g, c, 0.22, 0.3));
+    }
+    cores.push(tint(ball(0.012, 1, 0.8, 1, tip.x, tip.y + 0.006, tip.z), POLLEN, 0.15, 0.15));
+  }
+  return {petals, cores};
+}
+
+function fBabysBreath(c, d){
+  const petals = [], cores = [];
+  const puffs = Math.round(MU.lerp(16, 34, d));
+  const tips = [];
+  for(let i=0;i<puffs;i++){
+    const t = (i+0.5)/puffs;
+    const phi = Math.acos(1 - t*1.25);
+    const th = i*GOLDEN;
+    const r = 0.19 * (0.6 + 0.4*Math.random());
+    tips.push(new THREE.Vector3(Math.sin(phi)*Math.cos(th)*r, 0.06 + Math.cos(phi)*r*0.95 + 0.10,
+      Math.sin(phi)*Math.sin(th)*r));
+  }
+  // a few branches from the base, each feeding a share of the puffs
+  const branches = 5;
+  for(let b=0;b<branches;b++){
+    const target = tips[Math.floor(b*tips.length/branches)];
+    const mid = new THREE.Vector3(target.x*0.4, target.y*0.55, target.z*0.4);
+    cores.push(tint(rod(new THREE.Vector3(0,0,0), mid, 0.007, 0.005, 5), STALK, 0.14, 0.2));
+    for(let k=0;k<tips.length;k++){
+      if(k % branches !== b) continue;
+      cores.push(tint(rod(mid, tips[k], 0.004, 0.002, 4), STALK, 0.2, 0.2));
+    }
+  }
+  tips.forEach(tp=>{
+    const g = ball(0.026*(0.75+Math.random()*0.5), 1, 0.9, 1, tp.x, tp.y, tp.z);
+    petals.push(tint(g, c, 0.12, 0.18));
+  });
+  return {petals, cores};
+}
+
+function fEucalyptus(c, d){
+  const petals = [], cores = [];
+  const H = 0.78;
+  const pts = [];
+  const lean = (Math.random()-0.5)*0.18;
+  for(let i=0;i<=4;i++){
+    const t = i/4;
+    pts.push(new THREE.Vector3(Math.sin(t*1.4)*0.09 + lean*t, t*H, Math.cos(t*2.1)*0.03));
+  }
+  for(let i=0;i<pts.length-1;i++){
+    cores.push(tint(rod(pts[i], pts[i+1], 0.010 - i*0.0012, 0.009 - i*0.0012, 6), STALK, 0.12, 0.25));
+  }
+  const leaves = Math.round(MU.lerp(9, 15, d));
+  for(let i=0;i<leaves;i++){
+    const t = 0.13 + (i/(leaves-1)) * 0.84;
+    const seg = Math.min(pts.length-2, Math.floor(t*4));
+    const local = t*4 - seg;
+    const at = new THREE.Vector3().lerpVectors(pts[seg], pts[seg+1], local);
+    const g = makePetal({
+      w: 0.175*(1 - t*0.32), h: 0.20*(1 - t*0.28),
+      cup: 0.75, curl: 0.20, ripple: 0.01, shape: 1.35, round: 0.85, sw: 4, sh: 5
+    });
+    place(g, {radius: 0.024, angle: i*2.3, tilt: 1.42 + Math.sin(i)*0.14, y: 0});
+    g.translate(at.x, at.y, at.z);
+    petals.push(tint(g, c, 0.18, 0.35));
+  }
+  return {petals, cores};
+}
+
+const BUILDERS = {
+  rose:fRose, peony:fPeony, tulip:fTulip, ranunculus:fRanunculus, anemone:fAnemone,
+  daisy:fDaisy, sunflower:fSunflower, wildflower:fWildflower,
+  babysbreath:fBabysBreath, eucalyptus:fEucalyptus
+};
+
+function mergeAll(list){
+  if(!list.length) return null;
+  if(list.length === 1) return list[0];
+  const m = THREE.BufferGeometryUtils.mergeBufferGeometries(list, false);
+  if(m){ list.forEach(g=>g.dispose()); return m; }
+  return list[0];
+}
+
+/* ============================================================
+   9 · Arrangement
+   ============================================================ */
+const bouquet = new THREE.Group();
+scene.add(bouquet);
+
+let blooms = [];          // {obj, base, quat, scale, delay, phase, speed, tilt}
+let stemMesh = null;
+let ownedGeoms = [];
+let buildTime = 0;
+const desiredTarget = new THREE.Vector3(0, 1.5, 0);
+
+function clearBouquet(){
+  for(let i=bouquet.children.length-1;i>=0;i--) bouquet.remove(bouquet.children[i]);
+  ownedGeoms.forEach(g=>{ try{ g.dispose(); }catch(e){} });
+  ownedGeoms = [];
+  blooms = [];
+  stemMesh = null;
+}
+
+function shuffleBiased(items){
+  return items
+    .map(f=>({f, k: Math.random() + (f.filler ? 0.42 : 0)}))
+    .sort((a,b)=>a.k-b.k)
+    .map(o=>o.f);
+}
+
+function rebuild(){
+  clearBouquet();
+
+  const raw = [];
+  FLOWERS.forEach(f=>{ for(let i=0;i<state.counts[f.id];i++) raw.push(f); });
+  const items = shuffleBiased(raw);
+  const n = items.length;
+
+  document.getElementById('empty').classList.toggle('on', n === 0);
+  if(n === 0){
+    desiredTarget.set(0, VASE_H*0.55, 0);
+    return;
+  }
+
+  const dens = state.density / 100;
+  const sL   = (state.stem - 1) / 9;
+
+  const centerY = VASE_H + 0.24 + sL*0.85;
+  const R = (0.32 + Math.sqrt(n) * 0.078) * (1.18 - 0.32*dens);
+  const cap = MU.degToRad(76 + 16*(1 - dens));
+  const squash = 0.78;
+
+  const cache = new Map();
+  const stemGeoms = [];
+  const center = new THREE.Vector3(0, centerY, 0);
+  const dir = new THREE.Vector3(), aim = new THREE.Vector3(), pos = new THREE.Vector3();
+
+  for(let i=0;i<n;i++){
+    const f = items[i];
+    const t = (i + 0.5) / n;
+    const cosPhi = 1 - t * (1 - Math.cos(cap));
+    const phi = Math.acos(MU.clamp(cosPhi, -1, 1));
+    const theta = i * GOLDEN;
+
+    dir.set(Math.sin(phi)*Math.cos(theta), Math.cos(phi), Math.sin(phi)*Math.sin(theta)).normalize();
+
+    const rr = R * (0.90 + Math.random()*0.20) * (f.filler ? 1.10 : 1.0);
+    pos.copy(center).addScaledVector(dir, rr);
+    pos.y = center.y + (pos.y - center.y) * squash;
+    pos.x += (Math.random()-0.5) * R * 0.09;
+    pos.z += (Math.random()-0.5) * R * 0.09;
+
+    aim.copy(dir).addScaledVector(UP, 0.34).normalize();
+    const quat = new THREE.Quaternion().setFromUnitVectors(UP, aim);
+    quat.multiply(new THREE.Quaternion().setFromAxisAngle(UP, Math.random()*Math.PI*2));
+
+    // --- head ---
+    const key = f.id + '|' + state.colors[f.id] + '|' + Math.round(dens*4);
+    let entry = cache.get(key);
+    if(!entry){
+      const col = new THREE.Color(state.colors[f.id]);
+      const parts = BUILDERS[f.id](col, dens);
+      entry = {petal: mergeAll(parts.petals), core: mergeAll(parts.cores)};
+      if(entry.petal) ownedGeoms.push(entry.petal);
+      if(entry.core)  ownedGeoms.push(entry.core);
+      cache.set(key, entry);
+    }
+    const head = new THREE.Group();
+    if(entry.petal){
+      const m = new THREE.Mesh(entry.petal, petalMat);
+      m.castShadow = true; m.receiveShadow = true; head.add(m);
+    }
+    if(entry.core){
+      const m = new THREE.Mesh(entry.core, coreMat);
+      m.castShadow = true; m.receiveShadow = true; head.add(m);
+    }
+    head.position.copy(pos);
+    head.quaternion.copy(quat);
+    const s = f.scale * (0.88 + Math.random()*0.22);
+    head.scale.setScalar(0.0001);
+    bouquet.add(head);
+
+    blooms.push({
+      obj: head, base: pos.clone(), quat: quat.clone(), scale: s,
+      delay: i * 0.035 + Math.random()*0.05,
+      phase: Math.random()*Math.PI*2,
+      speed: 0.55 + Math.random()*0.55,
+      amp: 0.022 + Math.random()*0.028
+    });
+
+    // --- stem: base of vase → mouth → head, drawn as short cylinders ---
+    const foot  = new THREE.Vector3((Math.random()-0.5)*0.10, 0.10, (Math.random()-0.5)*0.10);
+    const mouth = new THREE.Vector3(dir.x*VASE_TOP_R*0.62*(0.5+Math.random()*0.5), VASE_H - 0.06,
+                                    dir.z*VASE_TOP_R*0.62*(0.5+Math.random()*0.5));
+    const mid   = new THREE.Vector3().lerpVectors(mouth, pos, 0.55).addScaledVector(dir, 0.05);
+    const curve = new THREE.CatmullRomCurve3([foot, mouth, mid, pos], false, 'catmullrom', 0.4);
+    const samples = curve.getPoints(7);
+    for(let k=0;k<samples.length-1;k++){
+      const kt = k/(samples.length-1);
+      stemGeoms.push(rod(samples[k], samples[k+1], 0.0155 - kt*0.006, 0.0155 - (kt+0.15)*0.006, 5));
+    }
+  }
+
+  const stemGeo = mergeAll(stemGeoms);
+  if(stemGeo){
+    ownedGeoms.push(stemGeo);
+    stemMat.opacity = 0;
+    stemMat.transparent = true;
+    stemMesh = new THREE.Mesh(stemGeo, stemMat);
+    stemMesh.castShadow = true; stemMesh.receiveShadow = true;
+    bouquet.add(stemMesh);
+  }
+
+  desiredTarget.set(0, centerY * 0.86, 0);
+  buildTime = clock.getElapsedTime();
+}
+
+/* ============================================================
+   10 · Post-processing
+   ============================================================ */
+let composer = null, ssao = null;
+// Ambient occlusion is the most expensive pass in the frame and the least
+// visible on a phone screen, so it is desktop-only. Below 900px the renderer
+// draws straight to the canvas, which is also the branch resize() falls back to.
+const canPost = !!(THREE.EffectComposer && THREE.RenderPass && THREE.ShaderPass &&
+                   THREE.SSAOPass && THREE.GammaCorrectionShader && THREE.SimplexNoise) &&
+                window.innerWidth >= 900;
+if(canPost){
+  composer = new THREE.EffectComposer(renderer);
+  composer.addPass(new THREE.RenderPass(scene, camera));
+
+  ssao = new THREE.SSAOPass(scene, camera, 1, 1);
+  ssao.kernelRadius = 0.07;      // scene units — petal overlaps are only centimetres wide
+  ssao.minDistance = 0.0012;
+  ssao.maxDistance = 0.045;
+  ssao.output = THREE.SSAOPass.OUTPUT.Default;
+  composer.addPass(ssao);
+
+  // EffectComposer renders into linear targets, so encode on the way out.
+  composer.addPass(new THREE.ShaderPass(THREE.GammaCorrectionShader));
+}
+
+function resize(){
+  const w = stage.clientWidth || 1, h = stage.clientHeight || 1;
+  camera.aspect = w/h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h, false);
+  if(composer) composer.setSize(w, h);
+  if(ssao) ssao.setSize(w, h);
+}
+window.addEventListener('resize', resize);
+
+/* ============================================================
+   11 · Camera: manual orbit ⇄ cinematic drift
+   ============================================================ */
+const IDLE_MS = 2500;
+let lastInteract = performance.now();
+let drifting = false, driftT = 0, driftPhi = 1.0, driftRadius = 3.6;
+const driftSph = new THREE.Spherical();
+const driftTag = document.getElementById('drift');
+const hint = document.getElementById('hint');
+
+function touched(){
+  lastInteract = performance.now();
+  hint.classList.add('gone');
+}
+controls.addEventListener('start', touched);
+['pointerdown','wheel','touchstart'].forEach(ev=>
+  renderer.domElement.addEventListener(ev, touched, {passive:true}));
+
+function updateCamera(dt){
+  controls.target.lerp(desiredTarget, Math.min(1, dt*2.2));
+
+  const idle = (performance.now() - lastInteract) > IDLE_MS;
+  if(idle && !drifting){
+    drifting = true; driftT = 0;
+    driftSph.setFromVector3(camera.position.clone().sub(controls.target));
+    driftPhi = driftSph.phi;
+    driftRadius = driftSph.radius;
+  } else if(!idle && drifting){
+    drifting = false;
+  }
+  driftTag.classList.toggle('on', drifting);
+
+  if(drifting){
+    driftT += dt;
+    driftSph.theta += dt * 0.085;
+    driftSph.phi = MU.clamp(driftPhi + Math.sin(driftT * 0.26) * 0.24, 0.32, 1.42);
+    driftSph.radius = MU.clamp(driftRadius + Math.sin(driftT * 0.19) * 0.45, 1.5, 7.5);
+    const want = new THREE.Vector3().setFromSpherical(driftSph).add(controls.target);
+    camera.position.lerp(want, Math.min(1, dt * 2.2));
+  }
+}
+
+/* ============================================================
+   12 · Loop
+   ============================================================ */
+const clock = new THREE.Clock();
+const _sq = new THREE.Quaternion(), _se = new THREE.Euler();
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function easeOutBack(x){
+  const c1 = 1.10158, c3 = c1 + 1;
+  return 1 + c3*Math.pow(x-1, 3) + c1*Math.pow(x-1, 2);
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const t  = clock.getElapsedTime();
+
+  for(let i=0;i<blooms.length;i++){
+    const b = blooms[i];
+    const age = t - buildTime - b.delay;
+    const grow = age <= 0 ? 0 : easeOutBack(Math.min(1, age/0.75));
+    b.obj.visible = grow > 0.002;
+    b.obj.scale.setScalar(b.scale * Math.max(grow, 0.0001));
+
+    if(!reduceMotion){
+      const s = t * b.speed + b.phase;
+      _se.set(Math.sin(s) * b.amp, Math.sin(s*0.61) * b.amp*0.8, Math.cos(s*0.83) * b.amp);
+      _sq.setFromEuler(_se);
+      b.obj.quaternion.copy(b.quat).multiply(_sq);
+      b.obj.position.set(
+        b.base.x + Math.sin(s*0.9) * 0.006,
+        b.base.y + Math.sin(s*0.7 + 1.3) * 0.004,
+        b.base.z + Math.cos(s*0.8) * 0.006
+      );
+    }
+  }
+
+  if(stemMesh && stemMat.opacity < 1){
+    const o = MU.clamp((t - buildTime) / 1.1, 0, 1);
+    stemMat.opacity = o;
+    if(o >= 1 && stemMat.transparent){ stemMat.transparent = false; stemMat.needsUpdate = true; }
+  }
+
+  updateCamera(dt);
+  controls.update();
+  if(composer) composer.render(); else renderer.render(scene, camera);
+}
+
+/* ============================================================
+   13 · Panel
+   ============================================================ */
+const list = document.getElementById('list');
+const totalEl = document.getElementById('total');
+const kindsEl = document.getElementById('kinds');
+const warnEl  = document.getElementById('warn');
+let debounce = null;
+
+function scheduleRebuild(){
+  clearTimeout(debounce);
+  debounce = setTimeout(rebuild, 220);
+}
+
+function refreshTally(){
+  let total = 0, kinds = 0;
+  FLOWERS.forEach(f=>{ total += state.counts[f.id]; if(state.counts[f.id]>0) kinds++; });
+  totalEl.textContent = total;
+  kindsEl.textContent = kinds;
+  warnEl.classList.toggle('on', total > 85);
+}
+
+FLOWERS.forEach(f=>{
+  const row = document.createElement('div');
+  row.className = 'stem-row';
+  row.innerHTML =
+    '<input type="color" value="' + f.color + '" aria-label="' + f.name + ' colour">' +
+    '<span class="stem-name">' + f.name + '</span>' +
+    '<span class="step">' +
+      '<button type="button" data-a="-" aria-label="One fewer ' + f.name + '">−</button>' +
+      '<span class="qty" aria-live="polite">0</span>' +
+      '<button type="button" data-a="+" aria-label="One more ' + f.name + '">+</button>' +
+    '</span>';
+  list.appendChild(row);
+
+  const swatch = row.querySelector('input');
+  const qty = row.querySelector('.qty');
+  const [minus, plus] = row.querySelectorAll('button');
+
+  function sync(){
+    const v = state.counts[f.id];
+    qty.textContent = v;
+    qty.classList.toggle('zero', v === 0);
+    row.classList.toggle('zero', v === 0);
+    minus.disabled = v === 0;
+    plus.disabled = v >= MAX_PER_TYPE;
+    refreshTally();
+  }
+  minus.addEventListener('click', ()=>{
+    state.counts[f.id] = Math.max(0, state.counts[f.id]-1); sync(); scheduleRebuild();
+  });
+  plus.addEventListener('click', ()=>{
+    state.counts[f.id] = Math.min(MAX_PER_TYPE, state.counts[f.id]+1); sync(); scheduleRebuild();
+  });
+  swatch.addEventListener('input', e=>{
+    state.colors[f.id] = e.target.value;
+    if(state.counts[f.id] > 0) scheduleRebuild();
+  });
+  f._sync = sync;
+  sync();
+});
+
+function bindSlider(id, valId, key, fmt){
+  const el = document.getElementById(id), out = document.getElementById(valId);
+  function paint(){
+    const pct = (el.value - el.min) / (el.max - el.min) * 100;
+    el.style.setProperty('--fill', pct + '%');
+    out.textContent = fmt(el.value);
+  }
+  el.addEventListener('input', ()=>{ state[key] = +el.value; paint(); scheduleRebuild(); });
+  paint();
+}
+bindSlider('density', 'densityVal', 'density', v=>v + '%');
+bindSlider('stem', 'stemVal', 'stem', v=>v);
+
+document.getElementById('rebuild').addEventListener('click', ()=>{ clearTimeout(debounce); rebuild(); });
+document.getElementById('clear').addEventListener('click', ()=>{
+  FLOWERS.forEach(f=>{ state.counts[f.id] = 0; f._sync(); });
+  clearTimeout(debounce); rebuild();
+});
+document.getElementById('oneEach').addEventListener('click', ()=>{
+  initOneOfEach();
+  FLOWERS.forEach(f=>f._sync());
+  clearTimeout(debounce); rebuild();
+});
+
+/* ============================================================
+   14b · Panel show / hide
+   ============================================================ */
+const panelEl = document.getElementById('panel');
+const menuBtn = document.getElementById('menuToggle');
+const panelCloseBtn = document.getElementById('panelClose');
+
+function setPanelOpen(open){
+  panelEl.classList.toggle('hidden', !open);
+  menuBtn.classList.toggle('open', open);
+  menuBtn.setAttribute('aria-expanded', String(open));
+  menuBtn.querySelector('.mt-label').textContent = open ? 'Close' : 'Arrange';
+  // The canvas is sized from the stage's box, which changes as the panel's
+  // width/height transitions — keep it in step for the length of that transition.
+  const start = performance.now(), dur = 480;
+  (function tick(now){
+    resize();
+    if(now - start < dur) requestAnimationFrame(tick);
+  })(start);
+}
+menuBtn.addEventListener('click', ()=> setPanelOpen(panelEl.classList.contains('hidden')));
+panelCloseBtn.addEventListener('click', ()=> setPanelOpen(false));
+
+/* ============================================================
+   14 · Go
+   ============================================================ */
+resize();
+loadEnvironment();
+rebuild();
+animate();
+setTimeout(()=>hint.classList.add('gone'), 9000);
+
+})();
+</script>
+</body>
+</html>

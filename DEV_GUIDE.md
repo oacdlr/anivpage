@@ -15,16 +15,20 @@ content/          <-- EVERYTHING YOU'LL NORMALLY EDIT IS IN HERE
   post-its.json        the messages on the post-it wall
   date-ideas.json      the list of date ideas
   screensavers.json    which images appear as screensavers
-  bouquet-options.json the flower/colour/wrap choices
 
 public/           <-- THE ACTUAL IMAGE FILES GO IN HERE
   photos/              album photos
   screensavers/        screensaver images
+  bouquet-studio.html  the whole bouquet page, in one file (see section 3)
 
-app/              the seven pages themselves (code — leave alone unless adding a page)
+app/              six of the seven pages (code — leave alone unless adding a page)
 components/       shared pieces used by more than one page
-lib/              the small bits of logic (date matching, bouquet generator)
+lib/              the small bits of logic (date matching)
 ```
+
+The bouquet page is the odd one out: it's a single self-contained file in
+`public/`, not a folder in `app/`. Section 3 explains why and what you can
+safely change in it.
 
 The seven pages, and which sticker goes where:
 
@@ -148,13 +152,42 @@ the closest thing it can. Ideas are allowed to come up more than once.
 
 These look best as tall, phone-shaped images (portrait, not landscape).
 
-### Changing the bouquet choices
+### The bouquet page
 
-Open `content/bouquet-options.json` and edit the three lists.
+This one works differently from the rest, so it gets a longer explanation.
 
-Note that the bouquet page is still a sketch — the real generator hasn't been
-built yet. When it is, it goes in one place only: `lib/bouquet.ts`, inside the
-function marked with a large comment saying exactly that.
+It's a 3D flower studio: she picks how many of each flower she wants, gives each
+one whatever colour she likes, and the bouquet is built in front of her. She can
+spin it around by dragging, and if she leaves it alone for a few seconds the
+camera starts drifting slowly on its own.
+
+The whole thing — layout, colours, flowers and all — lives in **one file**:
+`public/bouquet-studio.html`. There is no separate content file for it, because
+the flowers aren't text: each one is drawn by a small piece of maths.
+
+**What's safe to change.** Near the top of the code (search the file for
+`const FLOWERS`) there's a list that looks like this:
+
+```
+{id:'rose', name:'Rose', color:'#c2455f', scale:1.00, filler:false},
+```
+
+- `name` is the label she sees in the list. Rename freely.
+- `color` is the colour that flower starts as. She can change it herself with
+  the little circle next to each name, so this is just the starting point.
+- `scale` makes that flower bigger or smaller relative to the others.
+- Deleting a whole line removes that flower from the list.
+
+**What isn't.** *Adding* a new kind of flower is a real code change, not a
+content edit — each flower has a function that draws its petals (`fRose`,
+`fPeony`, `fTulip` and so on). Removing and recolouring is easy; inventing a new
+species is not.
+
+**The colours.** The top of the file has a block of colour settings that mirror
+the shared theme in `app/globals.css`. They're deliberately duplicated, because
+this page is a standalone file and can't read the site's stylesheet. If you
+change a colour in `app/globals.css`, change its twin here too, or this page
+will slowly drift away from the other six.
 
 ---
 
@@ -259,15 +292,21 @@ export default function AnniversaryPage() {
 Using `PageShell` is what keeps a new page looking like the rest of the site.
 The folder name **is** the web address, so name it carefully the first time.
 
+(The bouquet page doesn't follow this pattern — it's a plain HTML file in
+`public/`, pointed at `/bouquet` by a couple of lines in `next.config.ts`. That
+was a one-off because it's a self-contained 3D program. Stick to the folder
+recipe above for anything new.)
+
 ---
 
 ## 8. Things that will bite you
 
-**Don't rename the route folders.** `album`, `letter`, `date`, `bouquet`,
-`postits`, `surprise`, `screensavers` — the NFC stickers are physically
-programmed to point at those exact addresses. Renaming a folder makes its
-sticker lead to a dead page, and you can't fix that from in here; you'd have to
-rewrite the sticker itself.
+**Don't rename the route folders.** `album`, `letter`, `date`, `postits`,
+`surprise`, `screensavers` — the NFC stickers are physically programmed to point
+at those exact addresses. Renaming a folder makes its sticker lead to a dead
+page, and you can't fix that from in here; you'd have to rewrite the sticker
+itself. The same goes for `/bouquet`: don't rename `public/bouquet-studio.html`
+without changing the matching line in `next.config.ts`, or that sticker dies too.
 
 **Compress photos before adding them.** A photo straight off a phone can be
 8 MB, which is painfully slow over mobile data. Aim for **under 300 KB each** —

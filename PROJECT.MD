@@ -52,10 +52,14 @@ polish first — never core functionality.
    Use a no-backend form service (**Formspree or EmailJS**, free tier) rather than
    custom email infrastructure.
 
-4. **`/bouquet`** — Bouquet Generator
-   Front-end shell only for now: selection UI + "generate" button + result display
-   area. The actual generation algorithm will be added later — mark its insertion
-   point clearly with a comment/placeholder function.
+4. **`/bouquet`** — Bouquet Generator ✅ **built**
+   No longer a shell. A 3D flower studio: per-flower counts and colour pickers,
+   density and stem-length sliders, an orbit camera that drifts when idle. Ten
+   procedurally generated flower types, no images.
+   Implemented as one self-contained HTML file at `public/bouquet-studio.html`
+   (Three.js from a CDN), served at `/bouquet` by a rewrite in `next.config.ts`
+   rather than as a route under `app/`. The old placeholder — `lib/bouquet.ts`
+   and `content/bouquet-options.json` — has been removed.
 
 5. **`/postits`** — Post-it Wall
    Clicking anywhere on the wall spawns a new post-it note at a random position,
