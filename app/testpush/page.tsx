@@ -12,8 +12,8 @@ export default function TestPushPage() {
   return (
     <PageShell title="Test push" subtitle="checking the deploy pipeline">
       <blockquote>
-        <p>&ldquo;Amaze!&rdquo;</p>
-        <footer>— Rocky, <cite>Project Hail Mary</cite></footer>
+        <p>&ldquo;A heart&rsquo;s a heavy burden.&rdquo;</p>
+        <footer>— Calcifer, <cite>Howl&rsquo;s Moving Castle</cite></footer>
       </blockquote>
     </PageShell>
   );
