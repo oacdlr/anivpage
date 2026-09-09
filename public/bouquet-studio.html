@@ -328,7 +328,14 @@ FLOWERS.forEach(f=>{ state.counts[f.id]=0; state.colors[f.id]=f.color; });
 function initOneOfEach(){
   FLOWERS.forEach(f=>{ state.counts[f.id] = 1; });
 }
-initOneOfEach();
+function initBasedOnDayandlocation(){
+  const now = new Date();
+  FLOWERS.forEach((f,i)=>{
+    const seed = (now.getDate() + i * 7) % 10;
+    state.counts[f.id] = Math.floor(seed / 3);   // 0,1,2 stems of each type
+  });
+}
+initBasedOnDayandlocation();
 
 /* ============================================================
    2 · Renderer, scene, camera
