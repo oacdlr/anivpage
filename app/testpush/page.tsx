@@ -12,11 +12,10 @@ export default function TestPushPage() {
   return (
     <PageShell title="Test push" subtitle="checking the deploy pipeline">
       <blockquote>
-        <p>
-          &ldquo;When people are protecting something truly special to them,
-          they truly can become&hellip; as strong as they can be.&rdquo;
-        </p>
-        <footer>— Naruto Uzumaki, <cite>Naruto</cite></footer>
+        <p>&ldquo;A chief protects his own.&rdquo;</p>
+        <footer>
+          — Stoick the Vast, <cite>How to Train Your Dragon</cite>
+        </footer>
       </blockquote>
     </PageShell>
   );
