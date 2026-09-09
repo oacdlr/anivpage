@@ -45,7 +45,10 @@ export default function ScreensaverGrid({ items }: { items: Screensaver[] }) {
               src={item.src}
               alt=""
               fill
-              sizes="(max-width: 620px) 50vw, 33vw"
+              /* Must track the column counts in screensavers.module.css: one
+                 tile per row on a phone, two from 560px, three from 820px
+                 (inside a 900px-wide shell, so about 300px each). */
+              sizes="(max-width: 560px) 100vw, (max-width: 820px) 50vw, 300px"
               className={styles.thumb}
             />
             <span className={styles.tileLabel}>{item.title}</span>

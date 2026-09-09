@@ -150,7 +150,15 @@ the closest thing it can. Ideas are allowed to come up more than once.
 ]
 ```
 
-These look best as tall, phone-shaped images (portrait, not landscape).
+**Write the filename exactly, including the `.jpg` on the end.** Leaving the
+extension off, or writing `.jpeg` when the file is `.jpg`, gives you an empty
+tile with no error message — it's the easiest mistake to make here.
+
+These look best as **wide, landscape images** — the grid is laid out for
+roughly 16:9, the same shape as a TV or a phone held sideways. A portrait
+image still works, it just gets cropped down to a wide strip. Full screen,
+they fill the whole display: nearly perfect if she turns the phone sideways,
+cropped in a bit if she holds it upright.
 
 ### The bouquet page
 

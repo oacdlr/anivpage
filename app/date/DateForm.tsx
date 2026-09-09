@@ -4,7 +4,9 @@ import { useState } from "react";
 import { pickDate, type DateIdea } from "@/lib/pickDate";
 import styles from "./date.module.css";
 
-const MOODS = ["cozy", "adventurous", "romantic", "silly", "calm"];
+// These must include every value used in content/date-ideas.json — an idea
+// whose mood isn't listed here can never be matched, because she can't pick it.
+const MOODS = ["cozy", "adventurous", "romantic", "silly", "calm", "lazy"];
 const LOCATIONS = ["indoor", "outdoor", "either"];
 const BUDGETS = ["low", "medium", "treat ourselves"];
 
@@ -14,6 +16,7 @@ const LABELS: Record<string, string> = {
   romantic: "Romantic",
   silly: "Silly",
   calm: "Calm",
+  lazy: "Lazy",
   indoor: "Indoors",
   outdoor: "Outdoors",
   either: "Surprise me",

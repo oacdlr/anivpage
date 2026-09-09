@@ -1,34 +1,142 @@
 [
-  { "title": "Rooftop picnic", "mood": "cozy", "location": "outdoor", "budget": "low",
-    "description": "Blanket, snacks from the corner shop, and whatever the sky is doing." },
-  { "title": "Cooking class night", "mood": "adventurous", "location": "indoor", "budget": "medium",
-    "description": "Learn to make something neither of us has cooked before." },
-  { "title": "Blanket fort and old films", "mood": "cozy", "location": "indoor", "budget": "low",
-    "description": "Every cushion in the house. No phones allowed inside the fort." },
-  { "title": "Sunrise walk and breakfast after", "mood": "calm", "location": "outdoor", "budget": "low",
-    "description": "Painfully early, worth it, coffee immediately afterwards." },
-  { "title": "The nicest dinner we can justify", "mood": "romantic", "location": "indoor", "budget": "treat ourselves",
-    "description": "Dress up properly. Order the thing we'd normally talk ourselves out of." },
-  { "title": "Get deliberately lost", "mood": "adventurous", "location": "outdoor", "budget": "medium",
-    "description": "Pick a direction, keep going, see where we end up for lunch." },
-  { "title": "Terrible-movie marathon", "mood": "silly", "location": "indoor", "budget": "low",
-    "description": "The worse the reviews, the better. Snacks are mandatory." },
-  { "title": "Museum, then argue about the art", "mood": "calm", "location": "indoor", "budget": "medium",
-    "description": "Both pick a favourite piece and defend it to the death." },
-  { "title": "Spa day at home", "mood": "calm", "location": "indoor", "budget": "low",
-    "description": "Face masks, terrible music, absolutely no plans." },
-  { "title": "Mini road trip", "mood": "adventurous", "location": "outdoor", "budget": "treat ourselves",
-    "description": "Somewhere at least two hours away. One night, one bag each." },
-  { "title": "Dance in the kitchen", "mood": "silly", "location": "indoor", "budget": "low",
-    "description": "One playlist, no audience, no dignity." },
-  { "title": "Stargazing somewhere dark", "mood": "romantic", "location": "outdoor", "budget": "low",
-    "description": "Drive out past the lights, take a thermos, stay too long." },
-  { "title": "Bookshop crawl", "mood": "calm", "location": "either", "budget": "medium",
-    "description": "Each of us picks a book for the other. No vetoes." },
-  { "title": "Cocktails somewhere we can't pronounce", "mood": "romantic", "location": "either", "budget": "treat ourselves",
-    "description": "Order the strangest thing on the menu each." },
-  { "title": "Arcade and bad prizes", "mood": "silly", "location": "indoor", "budget": "medium",
-    "description": "Whoever loses buys dessert." },
-  { "title": "Long lunch, no schedule", "mood": "cozy", "location": "either", "budget": "medium",
-    "description": "Sit somewhere with good light and stay until they need the table." }
+  {
+    "title": "Picnic en la terraza",
+    "mood": "cozy",
+    "location": "outdoor",
+    "budget": "low",
+    "description": "Una cobija o algo para picnic, botanas,papas y snacks y comemos y dibujamos y yap"
+  },
+  {
+    "title": "Cooking class night",
+    "mood": "adventurous",
+    "location": "indoor",
+    "budget": "medium",
+    "description": "Aprender a preparar algo que ninguno de los dos haya cocinado antes."
+  },
+  {
+    "title": "Blanket fort and old films",
+    "mood": "cozy",
+    "location": "indoor",
+    "budget": "low",
+    "description": "Hacemos un fuerte con todos los cojines y vemos una peli con el proyector adentro"
+  },
+  {
+    "title": "Sunrise walk and breakfast after",
+    "mood": "calm",
+    "location": "outdoor",
+    "budget": "low",
+    "description": "Pararse temprano para camianr o correr o algo y despues ir a un cafecito"
+  },
+  {
+    "title": "The nicest dinner we can justify",
+    "mood": "romantic",
+    "location": "indoor",
+    "budget": "treat ourselves",
+    "description": "Vestirse elegante de verdad. Pedir eso que normalmente nos convenceríamos de no pedir y gastar"
+  },
+  {
+    "title": "Get deliberately lost",
+    "mood": "adventurous",
+    "location": "outdoor",
+    "budget": "medium",
+    "description": "Elegir una dirección, seguir adelante y ver dónde terminamos para comer.(si no encontramos toca uber eats en un lugar ranodm)"
+  },
+  {
+    "title": "Terrible-movie marathon",
+    "mood": "silly",
+    "location": "indoor",
+    "budget": "low",
+    "description": "Ver pelis malas con botana y ver a quien le da cringe o no soporta primero"
+  },
+  {
+    "title": "Museum, then argue about the art",
+    "mood": "calm",
+    "location": "indoor",
+    "budget": "medium",
+    "description": "Cada quien elige su pieza favorita y la defiende hasta el final."
+  },
+  {
+    "title": "Spa day at home",
+    "mood": "calm",
+    "location": "indoor",
+    "budget": "medium",
+    "description": "Mascarillas faciales,velitas y paz"
+  },
+  {
+    "title": "Mini road trip",
+    "mood": "adventurous",
+    "location": "outdoor",
+    "budget": "treat ourselves",
+    "description": "Un lugar a al menos dos horas de distancia. Una noche, una maleta cada quien."
+  },
+  {
+    "title": "Dance in the kitchen",
+    "mood": "silly",
+    "location": "indoor",
+    "budget": "low",
+    "description": "Una playlist, sin público, sin dignidad peor ahora planeado"
+  },
+  {
+    "title": "Stargazing somewhere dark",
+    "mood": "romantic",
+    "location": "outdoor",
+    "budget": "low",
+    "description": "Manejar hasta dejar atrás las luces, llevar un termo y quedarse más tiempo del debido.(esto se descarta hasta que tengamos coche pero se puede hacer referencia a la date de acampar)"
+  },
+  {
+    "title": "Bookshop crawl",
+    "mood": "calm",
+    "location": "either",
+    "budget": "medium",
+    "description": "Cada quien elige un libro para el otro. Sin vetos."
+  },
+  {
+    "title": "Cocktails somewhere we can't pronounce",
+    "mood": "romantic",
+    "location": "either",
+    "budget": "treat ourselves",
+    "description": "Cada quien pide lo más extraño del menú (no necesariamente son cocktails)"
+  },
+  {
+    "title": "Arcade and bad prizes",
+    "mood": "silly",
+    "location": "indoor",
+    "budget": "medium",
+    "description": "vamos a un arcade y quien pierda paga el postre."
+  },
+  {
+    "title": "Pijama day sin culpa",
+    "mood": "lazy",
+    "location": "indoor",
+    "budget": "low",
+    "description": "No cambiarse de pijama en todo el día, ver series y solo levantarse por comida."
+  },
+  {
+    "title": "Torneo de juegos de mesa",
+    "mood": "silly",
+    "location": "indoor",
+    "budget": "low",
+    "description": "Armar un mini torneo de 2-3 juegos y el perdedor cocina el postre"
+  },
+  {
+    "title": "Torneo de juegos de mesa pero outdoor",
+    "mood": "silly",
+    "location": "outdoor",
+    "budget": "medium",
+    "description": "ir a arcano o a quimera en modo serio y el perdedor invita un helado"
+  },
+  {
+    "title": "Clase de algo manual",
+    "mood": "adventurous",
+    "location": "indoor",
+    "budget": "medium",
+    "description": "Cerámica, pintura, algo con las manos que ninguno de los dos sepa hacer bien."
+  },
+  {
+    "title": "Fotos por la ciudad",
+    "mood": "romantic",
+    "location": "outdoor",
+    "budget": "low",
+    "description": "Caminar sin rumbo tomándonos fotos random, luego elegir juntos las mejores."
+  }
 ]

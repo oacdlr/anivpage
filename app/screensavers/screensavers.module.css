@@ -1,10 +1,18 @@
+/* The screensavers are landscape (16:9), so one per row on a phone — two
+   side by side would leave each one too small to make out. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   gap: 14px;
 }
 
-@media (min-width: 620px) {
+@media (min-width: 560px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 820px) {
   .grid {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -12,7 +20,9 @@
 
 .tile {
   position: relative;
-  aspect-ratio: 9 / 14;
+  /* Matches the shape of the images themselves, so the thumbnail shows the
+     whole picture instead of a cropped strip of the middle. */
+  aspect-ratio: 16 / 9;
   border: none;
   padding: 0;
   border-radius: var(--radius-sm);
@@ -35,12 +45,12 @@
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 22px 10px 9px;
+  padding: 14px 10px 8px;
   font-size: 0.82rem;
   font-weight: 600;
   color: #fff;
   text-align: center;
-  background: linear-gradient(180deg, transparent, rgba(24, 32, 46, 0.55));
+  background: linear-gradient(180deg, transparent, rgba(24, 32, 46, 0.62));
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
 }
 

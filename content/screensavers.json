@@ -1,8 +1,11 @@
 [
-  { "file": "sky.svg", "title": "Morning sky" },
-  { "file": "meadow.svg", "title": "Meadow" },
-  { "file": "petals.svg", "title": "Petals" },
-  { "file": "dusk.svg", "title": "Dusk" },
-  { "file": "sea.svg", "title": "Quiet sea" },
-  { "file": "bloom.svg", "title": "Bloom" }
+  { "file": "cozy_bun.jpg", "title": "conejitos mimiendo" },
+  { "file": "dino_day.jpg", "title": "un dia con dinos" },
+  { "file": "dino_night.jpg", "title": "una noche con dinos" },
+  { "file": "farm.jpg", "title": "una granja bonita" },
+  { "file": "under_water.jpg", "title": "un acuario" },
+  { "file": "stars_mountains.jpg", "title": "Stargazing" },
+  { "file": "underwater_sea.jpg", "title": "una sirena con vestido viendo el cielo" },
+  { "file": "manzanas.jpg", "title": "un manzano con pajaritos" },
+  { "file": "manzanas_noche.jpg", "title": "un manzano sin pajaritos pq ya es noche" }
 ]
