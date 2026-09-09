@@ -7,6 +7,14 @@ import styles from "./Lightbox.module.css";
 export type LightboxItem = {
   src: string;
   caption?: string;
+  /**
+   * Real pixel size, when the caller knows it. Given both, the viewer will
+   * never scale the image past its own resolution — a lot of the album photos
+   * are small, and stretching those to fill a phone screen just makes them
+   * blocky. Omit them (the screensavers do) to get the old fill behaviour.
+   */
+  width?: number;
+  height?: number;
 };
 
 /**
@@ -93,15 +101,29 @@ export default function Lightbox({
           if (!quiet) e.stopPropagation();
         }}
       >
-        <div className={styles.imageWrap} key={item.src}>
-          <Image
-            src={item.src}
-            alt={item.caption ?? ""}
-            fill
-            sizes="100vw"
-            className={styles.image}
-            priority
-          />
+        <div
+          className={`${styles.imageWrap} ${item.width && item.height ? styles.intrinsic : ""}`}
+          key={item.src}
+        >
+          {item.width && item.height ? (
+            <Image
+              src={item.src}
+              alt={item.caption ?? ""}
+              width={item.width}
+              height={item.height}
+              className={styles.capped}
+              priority
+            />
+          ) : (
+            <Image
+              src={item.src}
+              alt={item.caption ?? ""}
+              fill
+              sizes="100vw"
+              className={styles.image}
+              priority
+            />
+          )}
         </div>
 
         {!quiet && (

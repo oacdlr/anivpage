@@ -91,12 +91,21 @@ And this is the third.
 
 - `file` must match the filename **exactly**, including capital letters and the
   `.jpg` or `.png` at the end.
-- `caption` can be left as `""` for no caption.
+- `caption` can be left as `""` for no caption. All 52 are empty right now —
+  fill in the ones worth a line and leave the rest.
 
 To remove a photo, delete its line (and mind the commas — see section 2).
 
-The placeholder pictures that came with the site are the `photo-1.svg` through
-`photo-6.svg` entries. Delete those lines once you've added real ones.
+**Any shape is fine.** The album lays photos out like a pinboard, in columns,
+each one keeping its own proportions — tall, wide or square, nothing gets
+cropped. You don't need to tell it how big a photo is; it works that out from
+the file itself.
+
+**Small photos stay small.** Opened full screen, a photo is never blown up past
+its real size, because stretching a small one just makes it blocky. So a large
+photo fills the screen and a small one sits in the middle of the dark
+background. If one looks smaller than you'd like, the fix is a bigger original,
+not a settings change.
 
 ### Adding or removing post-it messages
 

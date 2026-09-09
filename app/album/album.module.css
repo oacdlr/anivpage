@@ -1,19 +1,32 @@
+/* Masonry wall. CSS columns rather than a grid, so each photo keeps its own
+   height and nothing is cropped — the album is 44 portraits, 5 landscapes and
+   a few squares, which a fixed tile shape would cut into. */
 .grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  column-count: 2;
+  column-gap: 12px;
 }
 
 @media (min-width: 560px) {
   .grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    column-count: 3;
+    column-gap: 16px;
+  }
+}
+
+@media (min-width: 820px) {
+  .grid {
+    column-count: 4;
   }
 }
 
 .tile {
-  position: relative;
-  aspect-ratio: 1;
+  display: block;
+  width: 100%;
+  /* Stops a photo being split across the bottom of one column and the top of
+     the next. The margin has to match the column gap or the wall looks uneven. */
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  margin: 0 0 12px;
   border: none;
   padding: 0;
   border-radius: var(--radius-sm);
@@ -24,12 +37,20 @@
   animation: rise 0.5s ease backwards;
 }
 
+@media (min-width: 560px) {
+  .tile {
+    margin-bottom: 16px;
+  }
+}
+
 .tile:active {
   transform: scale(0.97);
 }
 
 .thumb {
-  object-fit: cover;
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .empty {

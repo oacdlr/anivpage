@@ -35,6 +35,24 @@
   object-fit: contain;
 }
 
+/* Used when the caller passed the image's real size. The three `auto` values
+   let it sit at its natural resolution, and the two maximums shrink it if the
+   screen is smaller — so it scales down to fit but never up into mush. */
+.intrinsic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.capped {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 2px;
+}
+
 /* Screensaver mode fills the screen edge to edge. */
 .quiet .stage {
   padding: 0;

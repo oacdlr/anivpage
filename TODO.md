@@ -2,9 +2,8 @@
 
 Last updated: 8 September 2026. Live at https://anivpage.vercel.app
 
-All seven pages are built and deployed, and the screensavers, post-its and date
-ideas now hold your real content. What's left is the letter, the album photos,
-the Formspree setup, and writing the stickers.
+All seven pages are built, deployed, and running on your real content. What is
+left is the letter, the Formspree setup, and writing the stickers.
 
 ---
 
@@ -73,18 +72,26 @@ it feels like it should be. Delete `app/testpush/` before the stickers go out.
 
 ## Content — worth doing, won't stop the gift working
 
-### 6. Real photos in the album
+### 6. Captions for the album
 
-`public/photos/` still holds six placeholder drawings, and `content/album.json`
-still has captions like "Replace me with a real photo". This is the last page
-running on placeholder content.
+All 52 photos are in and laid out, but every caption is blank. They're optional
+— the album reads fine without them — but a line on the handful that have a
+story is the difference between a gallery and an album.
 
-Drop real photos into `public/photos/`, then list them in `content/album.json`.
-**Compress them first** — aim for under 300 KB each, around 1600 pixels on the
-long edge. https://squoosh.app does it in the browser. A photo straight off a
-phone can be 8 MB, which is painful over mobile data.
+Open `content/album.json` and fill in the `"caption"` for the ones worth it.
 
-### 7. Thin spots in the date ideas
+### 7. Optional: better originals for 29 of the photos
+
+Photos `photo-01` to `photo-29` came in small — most under 500 pixels wide, some
+as small as 143. They look fine as thumbnails, but opened full screen they can
+only show at their real size, so they sit small in the middle of the screen
+rather than filling it.
+
+If you still have the full-size originals anywhere, replacing the files is all
+it takes — same names, no JSON changes. The other 23 are full resolution
+already.
+
+### 8. Thin spots in the date ideas
 
 The list is up to 20, but there are now 6 moods × 3 locations × 3 budgets, and
 **21 of the 36 realistic combinations have no exact match**. The form never
@@ -98,7 +105,7 @@ generally.
 
 Two or three more `lazy` ideas would fix the worst of it.
 
-### 8. Optional: shrink the screensaver files
+### 9. Optional: shrink the screensaver files
 
 Seven of the nine are 700–900 KB (about 6.2 MB for the folder); `manzanas.jpg`
 and `manzanas_noche.jpg` are already fine at 135–175 KB. They're inefficiently
@@ -114,6 +121,7 @@ downloads the originals. Worth a pass through https://squoosh.app sometime.
 - All seven pages built, styled to one shared theme, and deployed
 - **Screensavers** — 9 real images in, grid reshaped to match their wide format,
   one per row on a phone
+- **Album** — 52 photos in, laid out as a masonry wall so nothing is cropped
 - **Post-it wall** — 34 messages, up from 4
 - **Date ideas** — 20 ideas, and the new `lazy` mood now appears in the form
 - **`/bouquet`** — the 3D flower studio, recoloured to the site's palette, and

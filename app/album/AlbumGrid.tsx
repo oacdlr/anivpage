@@ -18,21 +18,28 @@ export default function AlbumGrid({ photos }: { photos: LightboxItem[] }) {
 
   return (
     <>
+      {/* A masonry wall: CSS columns let every photo keep its own shape, so
+          nothing is cropped. Reading order runs down each column rather than
+          across the rows, which is the trade-off for not cutting anything off. */}
       <div className={styles.grid}>
         {photos.map((photo, i) => (
           <button
             key={photo.src}
             className={styles.tile}
-            style={{ animationDelay: `${i * 45}ms` }}
+            style={{ animationDelay: `${Math.min(i, 12) * 45}ms` }}
             onClick={() => setOpen(i)}
             aria-label={photo.caption || `Open photo ${i + 1}`}
           >
             <Image
               src={photo.src}
               alt={photo.caption ?? ""}
-              fill
-              sizes="(max-width: 560px) 50vw, 33vw"
+              width={photo.width ?? 3}
+              height={photo.height ?? 4}
+              sizes="(max-width: 560px) 50vw, (max-width: 820px) 33vw, 290px"
               className={styles.thumb}
+              /* The first handful fill the screen before any scrolling, so
+                 they're fetched eagerly; the rest wait until she scrolls. */
+              priority={i < 4}
             />
           </button>
         ))}
