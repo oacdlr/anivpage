@@ -12,8 +12,11 @@ export default function TestPushPage() {
   return (
     <PageShell title="Test push" subtitle="checking the deploy pipeline">
       <blockquote>
-        <p>&ldquo;A heart&rsquo;s a heavy burden.&rdquo;</p>
-        <footer>— Calcifer, <cite>Howl&rsquo;s Moving Castle</cite></footer>
+        <p>
+          &ldquo;When people are protecting something truly special to them,
+          they truly can become&hellip; as strong as they can be.&rdquo;
+        </p>
+        <footer>— Naruto Uzumaki, <cite>Naruto</cite></footer>
       </blockquote>
     </PageShell>
   );

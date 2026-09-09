@@ -2,8 +2,8 @@
 
 Last updated: 8 September 2026. Live at https://anivpage.vercel.app
 
-All seven pages are built, deployed, and running on your real content. What is
-left is the letter, the Formspree setup, and writing the stickers.
+All seven pages are built, deployed, and running on your real content. The date
+form now emails for real. What is left is the letter and writing the stickers.
 
 ---
 
@@ -19,23 +19,7 @@ site by a wide margin.
 
 Leave a blank line between paragraphs — that's what makes a new paragraph.
 
-### 2. Set up Formspree so the date form actually sends
-
-`.env.local` has an empty `NEXT_PUBLIC_FORMSPREE_ENDPOINT`. Right now `/date`
-picks an idea, shows it to her, and quietly tells her it couldn't be sent. It
-doesn't crash, but the email never arrives.
-
-1. Make a free form at https://formspree.io, giving the email address that should
-   receive them.
-2. Paste the endpoint into `.env.local`.
-3. Paste **the same value** into Vercel → your project → Settings → Environment
-   Variables, then redeploy. This step is easy to forget: the value is baked in
-   at build time, so setting it only on your own computer does nothing for the
-   live site.
-
-Full instructions are in `DEV_GUIDE.md` section 6.
-
-### 3. Write the NFC stickers
+### 2. Write the NFC stickers
 
 Seven stickers, one address each:
 
@@ -49,11 +33,10 @@ Seven stickers, one address each:
 | the animation | `https://anivpage.vercel.app/surprise` |
 | screensavers | `https://anivpage.vercel.app/screensavers` |
 
-Do this **after** step 2, so you're not re-writing tags later. Once they're
-written these addresses are locked — see the warnings in `DEV_GUIDE.md`
-section 8.
+The addresses are settled now that the form sends, so these are safe to write.
+Once written they are locked — see the warnings in `DEV_GUIDE.md` section 8.
 
-### 4. Test all seven on a real phone
+### 3. Test all seven on a real phone
 
 Nobody has tapped the real thing yet. `/bouquet` matters most: it's the only
 page whose cost is the phone's graphics rather than a network download, and the
@@ -62,7 +45,7 @@ one page that couldn't be tested at phone size from a desktop.
 Worth checking on `/screensavers` too: the pictures are wide, so they look best
 with the phone turned sideways once one is open full screen.
 
-### 5. Delete the test page
+### 4. Delete the test page
 
 `/testpush` is still live. It has done its job — pushing to GitHub does trigger a
 rebuild, and deploys take about **ten to fifteen minutes**, which is slower than
@@ -72,7 +55,7 @@ it feels like it should be. Delete `app/testpush/` before the stickers go out.
 
 ## Content — worth doing, won't stop the gift working
 
-### 6. Captions for the album
+### 5. Captions for the album
 
 All 52 photos are in and laid out, but every caption is blank. They're optional
 — the album reads fine without them — but a line on the handful that have a
@@ -80,18 +63,21 @@ story is the difference between a gallery and an album.
 
 Open `content/album.json` and fill in the `"caption"` for the ones worth it.
 
-### 7. Optional: better originals for 29 of the photos
+### 6. Optional: better originals for 29 of the photos
 
-Photos `photo-01` to `photo-29` came in small — most under 500 pixels wide, some
-as small as 143. They look fine as thumbnails, but opened full screen they can
-only show at their real size, so they sit small in the middle of the screen
-rather than filling it.
+Photos `photo-01` to `photo-29` came in as thumbnails — most under 500 pixels
+wide, the smallest 143. They have since been **normalized**: doubled in size by
+`scripts/upscale-photos.mjs`, with nothing pushed past 1280 pixels, which is the
+size the other 23 already are. The originals are kept untouched in
+`photos-originals/`, which is outside `public/` and so never part of the site.
 
-If you still have the full-size originals anywhere, replacing the files is all
-it takes — same names, no JSON changes. The other 23 are full resolution
-already.
+That makes them open bigger on a phone, but enlarging cannot put back detail
+that was never in the file. **If you ever find the full-size originals, they
+still beat this.** Drop them into `public/photos/` under the same names, delete
+those names from `photos-originals/`, and push — no JSON or code changes. See
+`DEV_GUIDE.md` section 3.
 
-### 8. Thin spots in the date ideas
+### 7. Thin spots in the date ideas
 
 The list is up to 20, but there are now 6 moods × 3 locations × 3 budgets, and
 **21 of the 36 realistic combinations have no exact match**. The form never
@@ -105,7 +91,7 @@ generally.
 
 Two or three more `lazy` ideas would fix the worst of it.
 
-### 9. Optional: shrink the screensaver files
+### 8. Optional: shrink the screensaver files
 
 Seven of the nine are 700–900 KB (about 6.2 MB for the folder); `manzanas.jpg`
 and `manzanas_noche.jpg` are already fine at 135–175 KB. They're inefficiently
@@ -126,5 +112,9 @@ downloads the originals. Worth a pass through https://squoosh.app sometime.
 - **Date ideas** — 20 ideas, and the new `lazy` mood now appears in the form
 - **`/bouquet`** — the 3D flower studio, recoloured to the site's palette, and
   tuned to open fast on mobile data
+- **The date form sends for real** — Formspree endpoint set locally and on
+  Vercel, and tested end to end
+- **Album photos normalized** — the 29 small ones enlarged up to 2× so the
+  album no longer opens half tiny, half full screen
 - Vercel connected to GitHub: pushing to `main` deploys on its own
 - `DEV_GUIDE.md` written, for editing content later without help

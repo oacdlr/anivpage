@@ -24,6 +24,9 @@ public/           <-- THE ACTUAL IMAGE FILES GO IN HERE
 app/              six of the seven pages (code — leave alone unless adding a page)
 components/       shared pieces used by more than one page
 lib/              the small bits of logic (date matching)
+scripts/          one-off tools you run by hand (see section 3)
+photos-originals/ untouched copies of the album photos that were enlarged —
+                  not part of the website, kept only as a safety net
 ```
 
 The bouquet page is the odd one out: it's a single self-contained file in
@@ -106,6 +109,24 @@ its real size, because stretching a small one just makes it blocky. So a large
 photo fills the screen and a small one sits in the middle of the dark
 background. If one looks smaller than you'd like, the fix is a bigger original,
 not a settings change.
+
+**Photos 01–29 have already been enlarged once.** They came in as thumbnails,
+some only 143 pixels across, so `scripts/upscale-photos.mjs` doubled them
+(nothing was pushed past 1280 pixels, the size the other photos already are).
+Their untouched copies are kept in `photos-originals/`, outside `public/`, so
+they're never part of the website — they're only there in case something needs
+undoing.
+
+Enlarging cannot add detail that was never in the file, so **if you ever find
+the full-size originals of those photos, they will beat this.** Swapping them in
+takes no code:
+
+1. Put the full-size files into `public/photos/`, keeping the same names.
+2. Delete those same names from `photos-originals/`.
+3. Commit and push (section 7). Nothing in `content/album.json` changes.
+
+If you add new small photos later, run `node scripts/upscale-photos.mjs` and it
+will do the same to them, leaving everything it has already handled alone.
 
 ### Adding or removing post-it messages
 
