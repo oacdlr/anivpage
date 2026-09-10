@@ -79,6 +79,41 @@
   }
   #empty.on{opacity:1}
 
+  /* The location card. Sits above the canvas but below #overlay's z-index 4, so
+     the loading scrim always wins; it is the one stage element that takes
+     clicks, hence pointer-events only while it is actually on. */
+  #geoask{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    z-index:3;max-width:320px;padding:26px 28px;text-align:center;
+    background:var(--surface);border:1px solid var(--blue-soft);border-radius:18px;
+    box-shadow:0 6px 30px rgba(47,59,82,.10);
+    opacity:0;pointer-events:none;transition:opacity .5s ease;
+  }
+  #geoask.on{opacity:1;pointer-events:auto}
+  #geoask-q{
+    margin:0;font-family:var(--serif);font-style:italic;font-size:18px;
+    line-height:1.5;color:var(--ink);
+  }
+  .geoask-sub{margin:10px 0 0;font-size:12.5px;line-height:1.7;color:var(--ink-soft)}
+  .geoask-actions{margin-top:20px;display:flex;gap:10px;justify-content:center}
+  #geoYes{
+    padding:12px 26px;border:none;border-radius:999px;cursor:pointer;
+    background:var(--blue);
+    color:#fff;font-family:var(--sans);font-weight:600;font-size:12px;
+    letter-spacing:.16em;text-transform:uppercase;
+    box-shadow:0 2px 10px rgba(47,59,82,.08);
+    transition:filter .2s ease,transform .1s ease;
+  }
+  #geoYes:hover{filter:brightness(1.06)}
+  #geoYes:active{transform:scale(.97)}
+  #geoNo{
+    padding:12px 20px;border:1.5px solid var(--blue-soft);border-radius:999px;
+    background:var(--surface);
+    color:var(--blue-deep);font-family:var(--sans);font-weight:600;font-size:12px;letter-spacing:.1em;
+    cursor:pointer;transition:color .2s ease,border-color .2s ease;
+  }
+  #geoNo:hover{color:var(--ink);border-color:var(--blue)}
+
   /* ---------- menu toggle ---------- */
   .menu-toggle{
     position:absolute;top:22px;right:22px;z-index:5;display:flex;align-items:center;gap:10px;
@@ -228,6 +263,14 @@
   <main id="stage">
     <canvas id="scene"></canvas>
     <div id="empty">Choose a few stems to begin the arrangement.</div>
+    <div id="geoask" role="dialog" aria-labelledby="geoask-q">
+      <p id="geoask-q">Shall I arrange these for where you are?</p>
+      <p class="geoask-sub">The day already shapes the bouquet. Your corner of the world can shape it further.</p>
+      <div class="geoask-actions">
+        <button id="geoYes" type="button">Yes</button>
+        <button id="geoNo" type="button">No thanks</button>
+      </div>
+    </div>
     <div id="drift">drifting</div>
     <div id="hint">DRAG TO ORBIT &nbsp;·&nbsp; SCROLL TO ZOOM</div>
     <div id="overlay"><div class="ring"></div><div id="ovtext">Loading Environment…</div></div>
@@ -328,14 +371,20 @@ FLOWERS.forEach(f=>{ state.counts[f.id]=0; state.colors[f.id]=f.color; });
 function initOneOfEach(){
   FLOWERS.forEach(f=>{ state.counts[f.id] = 1; });
 }
-function initBasedOnDayandlocation(){
-  const now = new Date();
+// The day alone shapes the bouquet. Given coordinates, the place shapes it too --
+// same seed, two more terms. Coordinates are rounded to whole degrees (~111km):
+// this is a bouquet, not a map, and the number never leaves the page.
+function initBasedOnDayandlocation(lat, lon){
+  const day = new Date().getDate();
+  const here = (lat == null || lon == null)
+    ? 0
+    : Math.round(Math.abs(lat)) + Math.round(Math.abs(lon));
   FLOWERS.forEach((f,i)=>{
-    const seed = (now.getDate() + i * 7) % 10;
-    state.counts[f.id] = Math.floor(seed / 3);   // 0,1,2 stems of each type
+    const seed = (day + here + i * 7) % 10;
+    state.counts[f.id] = Math.floor(seed / 3);   // 0-3 stems of each type
   });
 }
-initBasedOnDayandlocation();
+initBasedOnDayandlocation();   // day-only until (and unless) location arrives
 
 /* ============================================================
    2 · Renderer, scene, camera
@@ -1218,12 +1267,74 @@ menuBtn.addEventListener('click', ()=> setPanelOpen(panelEl.classList.contains('
 panelCloseBtn.addEventListener('click', ()=> setPanelOpen(false));
 
 /* ============================================================
+   14c · Where you are
+   ============================================================ */
+/* Everything here is an enhancement layered onto a bouquet that has already
+   rendered. A refusal -- theirs, the browser's, or a failed fix -- is an answer,
+   not an error: the day-only arrangement simply stays. Coordinates are used for
+   arithmetic and discarded; only the yes/no string is ever stored. */
+const GEO_KEY = 'flowerRoom.geo';
+const geoCard = document.getElementById('geoask');
+
+// localStorage throws outright in some private-browsing modes, so both
+// directions are guarded and a failed read just means "not yet answered".
+function geoRemembered(){
+  try { return localStorage.getItem(GEO_KEY); } catch(e){ return null; }
+}
+function rememberGeo(answer){
+  try { localStorage.setItem(GEO_KEY, answer); } catch(e){ /* nothing to do */ }
+}
+
+function hideGeoCard(){ geoCard.classList.remove('on'); }
+
+// The same mutate -> sync -> rebuild sequence the panel's own buttons use; the
+// rows are built once and never re-created, so _sync() is what keeps them honest.
+function applyLocation(lat, lon){
+  initBasedOnDayandlocation(lat, lon);
+  FLOWERS.forEach(f=>f._sync());
+  clearTimeout(debounce);
+  rebuild();
+}
+
+function askBrowserForLocation(){
+  navigator.geolocation.getCurrentPosition(
+    pos => { hideGeoCard(); applyLocation(pos.coords.latitude, pos.coords.longitude); },
+    ()  => { hideGeoCard(); },          // denied, timed out, or no fix -- keep the day bouquet
+    { timeout: 8000, maximumAge: 600000 }
+  );
+}
+
+document.getElementById('geoYes').addEventListener('click', ()=>{
+  rememberGeo('yes');
+  askBrowserForLocation();
+});
+document.getElementById('geoNo').addEventListener('click', ()=>{
+  rememberGeo('no');
+  hideGeoCard();
+});
+
+function startLocationFlow(){
+  if(!('geolocation' in navigator)) return;   // never ask what can't be answered
+  const answered = geoRemembered();
+  if(answered === 'no') return;
+  if(answered === 'yes'){
+    // Chrome remembers the site permission, so this does not re-prompt. If it
+    // was revoked since, the error path leaves the day bouquet untouched.
+    askBrowserForLocation();
+    return;
+  }
+  // Let the bouquet land first -- the question is about something they can see.
+  setTimeout(()=>geoCard.classList.add('on'), 1400);
+}
+
+/* ============================================================
    14 · Go
    ============================================================ */
 resize();
 loadEnvironment();
 rebuild();
 animate();
+startLocationFlow();
 setTimeout(()=>hint.classList.add('gone'), 9000);
 
 })();
