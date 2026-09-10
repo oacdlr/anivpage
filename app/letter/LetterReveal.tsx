@@ -38,7 +38,7 @@ export default function LetterReveal({ paragraphs }: { paragraphs: string[] }) {
           className={`btn btn-soft ${styles.again}`}
           onClick={() => setStage("closed")}
         >
-          Seal it again
+          Cerrar Carta
         </button>
       </div>
     );
@@ -49,7 +49,7 @@ export default function LetterReveal({ paragraphs }: { paragraphs: string[] }) {
       <button
         className={styles.envelopeBtn}
         onClick={open}
-        aria-label="Open the letter"
+        aria-label="Abrir Carta"
       >
         <div
           className={`${styles.envelope} ${stage === "opening" ? styles.opening : ""}`}
@@ -58,7 +58,7 @@ export default function LetterReveal({ paragraphs }: { paragraphs: string[] }) {
           <div className={styles.seal}>♥</div>
         </div>
       </button>
-      <p className={styles.tapHint}>tap to open</p>
+      <p className={styles.tapHint}>click para abrir</p>
     </div>
   );
 }

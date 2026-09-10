@@ -9,8 +9,8 @@ export const metadata: Metadata = { title: "Let's plan a date" };
 export default function DatePage() {
   return (
     <PageShell
-      title="Let's plan a date"
-      subtitle="answer three things and it's booked"
+      title="Aqui se puede planear una date"
+      subtitle="contestando se arma y se envia a un mail"
     >
       <DateForm ideas={ideas as DateIdea[]} />
     </PageShell>

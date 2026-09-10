@@ -12,7 +12,7 @@ export default function ScreensaversPage() {
   }));
 
   return (
-    <PageShell title="Something calm" subtitle="pick one and just look at it" wide>
+    <PageShell title="Something calm" subtitle="click solo para ver y yap" wide>
       <ScreensaverGrid items={items} />
     </PageShell>
   );

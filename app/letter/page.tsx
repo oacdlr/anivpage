@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import PageShell from "@/components/PageShell";
 import LetterReveal from "./LetterReveal";
 
-export const metadata: Metadata = { title: "A letter for you" };
+export const metadata: Metadata = { title: "Una cartita" };
 
 /**
  * The letter text lives in content/letter.md so it can be edited without

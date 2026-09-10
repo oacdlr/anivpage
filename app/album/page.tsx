@@ -22,7 +22,7 @@ export default function AlbumPage() {
   });
 
   return (
-    <PageShell title="Our album" subtitle="tap a photo to open it" wide>
+    <PageShell title="Album" subtitle="se puede hacer mas grande la foto" wide>
       <AlbumGrid photos={photos} />
     </PageShell>
   );

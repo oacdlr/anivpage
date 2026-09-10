@@ -123,9 +123,9 @@ export default function DateForm({ ideas }: { ideas: DateIdea[] }) {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
-      <Choices label="What mood are you in?" options={MOODS} value={mood} onChange={setMood} />
+      <Choices label="Mood?" options={MOODS} value={mood} onChange={setMood} />
       <Choices label="Out, or in?" options={LOCATIONS} value={location} onChange={setLocation} />
-      <Choices label="How fancy?" options={BUDGETS} value={budget} onChange={setBudget} />
+      <Choices label="Dinero?" options={BUDGETS} value={budget} onChange={setBudget} />
 
       <fieldset className={styles.group}>
         <legend className={styles.legend}>Anything to add?</legend>
