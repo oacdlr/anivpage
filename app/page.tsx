@@ -12,7 +12,7 @@ export default function Home() {
         <div className={styles.mark}>🌸</div>
         <h1>Nothing to see here</h1>
         <p className={styles.line}>
-          This one only opens when you tap it. Go find a sticker.
+          no usar stickers es considerado trampa
         </p>
       </div>
     </main>
