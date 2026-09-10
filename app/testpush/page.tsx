@@ -14,11 +14,10 @@ export default function TestPushPage() {
     <PageShell title="Test push" subtitle="checking the deploy pipeline">
       <blockquote>
         <p>
-          &ldquo;There&rsquo;s a zombie on your lawn. We don&rsquo;t want
-          zombies on the lawn.&rdquo;
+          &ldquo;Life finds a way.&rdquo;
         </p>
         <footer>
-          — the sunflowers, <cite>Plants vs. Zombies</cite>
+          — Dr. Ian Malcolm, <cite>Jurassic Park</cite>
         </footer>
       </blockquote>
     </PageShell>
