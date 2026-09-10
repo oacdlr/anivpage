@@ -21,7 +21,8 @@ public/           <-- THE ACTUAL IMAGE FILES GO IN HERE
   screensavers/        screensaver images
   bouquet-studio.html  the whole bouquet page, in one file (see section 3)
 
-app/              six of the seven pages (code — leave alone unless adding a page)
+app/              six of the seven pages, plus the front door and one unlisted
+                  easter egg (code — leave alone unless adding a page)
 components/       shared pieces used by more than one page
 lib/              the small bits of logic (date matching)
 scripts/          one-off tools you run by hand (see section 3)
@@ -123,7 +124,7 @@ takes no code:
 
 1. Put the full-size files into `public/photos/`, keeping the same names.
 2. Delete those same names from `photos-originals/`.
-3. Commit and push (section 7). Nothing in `content/album.json` changes.
+3. Commit and push (section 5). Nothing in `content/album.json` changes.
 
 If you add new small photos later, run `node scripts/upscale-photos.mjs` and it
 will do the same to them, leaving everything it has already handled alone.
@@ -160,7 +161,7 @@ Open `content/date-ideas.json`. Each idea looks like this:
 `title` and `description` can say anything. The other three **must** be spelled
 exactly as one of these, or the idea won't be matched properly:
 
-- `mood`: `cozy`, `adventurous`, `romantic`, `silly`, `calm`
+- `mood`: `cozy`, `adventurous`, `romantic`, `silly`, `calm`, `lazy`
 - `location`: `indoor`, `outdoor`, `either`
 - `budget`: `low`, `medium`, `treat ourselves`
 
@@ -198,6 +199,16 @@ It's a 3D flower studio: she picks how many of each flower she wants, gives each
 one whatever colour she likes, and the bouquet is built in front of her. She can
 spin it around by dragging, and if she leaves it alone for a few seconds the
 camera starts drifting slowly on its own.
+
+**It doesn't open the same way twice.** The bouquet that's already standing
+there when the page loads is worked out from the day of the month, so it changes
+daily on its own. A few seconds in, a card asks whether she'll share roughly
+where she is; if she says yes, her position is rounded to whole degrees, folded
+into the same calculation, and thrown away. Nothing is sent anywhere and no
+coordinates are stored — only her yes-or-no answer, so the card is asked once.
+A no, a refusal, or a browser that can't do it leaves the day-only bouquet
+standing; the question is never something the page waits on. Twelve stems across
+seven varieties either way — location changes *which* flowers, not how many.
 
 The whole thing — layout, colours, flowers and all — lives in **one file**:
 `public/bouquet-studio.html`. There is no separate content file for it, because
@@ -265,8 +276,10 @@ git commit -m "Added new photos"
 git push
 ```
 
-Vercel notices the push and rebuilds the site by itself, usually in under a
-minute. You can watch it happen at https://vercel.com/dashboard.
+Vercel notices the push and rebuilds the site by itself. In practice this takes
+**ten to fifteen minutes**, which is slower than it feels like it should be — it
+hasn't failed, it's just slow, so give it the quarter of an hour before assuming
+something is wrong. You can watch it happen at https://vercel.com/dashboard.
 
 If it isn't connected to GitHub yet, install the Vercel tool once with
 `npm install -g vercel`, then run `vercel --prod` from this folder.
@@ -340,11 +353,12 @@ recipe above for anything new.)
 ## 8. Things that will bite you
 
 **Don't rename the route folders.** `album`, `letter`, `date`, `postits`,
-`surprise`, `screensavers` — the NFC stickers are physically programmed to point
-at those exact addresses. Renaming a folder makes its sticker lead to a dead
-page, and you can't fix that from in here; you'd have to rewrite the sticker
-itself. The same goes for `/bouquet`: don't rename `public/bouquet-studio.html`
-without changing the matching line in `next.config.ts`, or that sticker dies too.
+`surprise`, `screensavers` — the NFC stickers are written and in her hands, and
+they are physically programmed to point at those exact addresses. This is no
+longer a precaution: renaming a folder makes a real sticker lead to a dead page,
+and you can't fix that from in here; you'd have to rewrite the sticker itself.
+The same goes for `/bouquet`: don't rename `public/bouquet-studio.html` without
+changing the matching line in `next.config.ts`, or that sticker dies too.
 
 **Compress photos before adding them.** A photo straight off a phone can be
 8 MB, which is painfully slow over mobile data. Aim for **under 300 KB each** —
@@ -360,6 +374,12 @@ stops the whole site from building.
 
 **The post-it wall forgetting everything is intentional.** Notes vanish when the
 page is closed. That's by design, not a bug.
+
+**There's an eighth page, and it's meant to be there.** `/testpush` was built to
+prove that pushing to GitHub really does rebuild the site. It does, and the page
+was kept as an unlisted easter egg — no sticker points at it, nothing links to
+it, and it holds a quote that gets swapped now and then. It isn't leftover
+scaffolding; don't tidy it away.
 
 **Everything is readable by anyone with the link.** There's no password. The
 addresses aren't secret, they're just unlisted and hidden from Google. Don't put
