@@ -201,14 +201,19 @@ spin it around by dragging, and if she leaves it alone for a few seconds the
 camera starts drifting slowly on its own.
 
 **It doesn't open the same way twice.** The bouquet that's already standing
-there when the page loads is worked out from the day of the month, so it changes
-daily on its own. A few seconds in, a card asks whether she'll share roughly
+there when the page loads is worked out from the date and the time, so it
+changes on its own six times a day — at midnight, 4am, 8am, noon, 4pm and 8pm,
+by her own clock. Morning and evening on the same day are different bouquets.
+(It only re-reads the clock when the page is opened, so if she leaves the studio
+sitting open past 4pm nothing rearranges itself under her hands.) A few seconds
+in, a card asks whether she'll share roughly
 where she is; if she says yes, her position is rounded to whole degrees, folded
 into the same calculation, and thrown away. Nothing is sent anywhere and no
 coordinates are stored — only her yes-or-no answer, so the card is asked once.
 A no, a refusal, or a browser that can't do it leaves the day-only bouquet
 standing; the question is never something the page waits on. Twelve stems across
-seven varieties either way — location changes *which* flowers, not how many.
+seven varieties in every case — the clock and the place change *which* flowers
+she gets, never how many, so it can't come up bare or overcrowded.
 
 The whole thing — layout, colours, flowers and all — lives in **one file**:
 `public/bouquet-studio.html`. There is no separate content file for it, because

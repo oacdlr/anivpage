@@ -371,16 +371,36 @@ FLOWERS.forEach(f=>{ state.counts[f.id]=0; state.colors[f.id]=f.color; });
 function initOneOfEach(){
   FLOWERS.forEach(f=>{ state.counts[f.id] = 1; });
 }
-// The day alone shapes the bouquet. Given coordinates, the place shapes it too --
-// same seed, two more terms. Coordinates are rounded to whole degrees (~111km):
-// this is a bouquet, not a map, and the number never leaves the page.
+// The day, the hour and (if she offers it) the place shape the bouquet, as three
+// terms of one seed. Coordinates are rounded to whole degrees (~111km): this is
+// a bouquet, not a map, and the number never leaves the page.
+//
+// The day turns it over at midnight; BLOCK_HOURS splits the day into six
+// four-hour windows so it turns over five more times in between. Both the offset
+// and the step change per window: the offset moves it 3 places along the cycle,
+// while STRIDES re-deals which flower draws which count instead of merely
+// rotating them -- rotation alone would leave only ten bouquets in existence,
+// and she'd meet all of them in under two days.
+//
+// Every stride is coprime with 10, so the ten flowers always land on ten
+// distinct residues and floor(r/3) over r=0..9 always spends the same
+// 0,0,0,1,1,1,2,2,2,3 -- every hour of every day, anywhere, gives 12 stems
+// across 7 of the 10 varieties. The clock changes which flowers, never how many.
+//
+// Seeded at load only. Leaving the studio open past a boundary must not
+// rearrange a bouquet she is in the middle of building.
+const BLOCK_HOURS = 4;
+const STRIDES = [7, 9, 3, 1];
 function initBasedOnDayandlocation(lat, lon){
-  const day = new Date().getDate();
+  const now = new Date();
+  const day = now.getDate();
+  const block = Math.floor(now.getHours() / BLOCK_HOURS);   // 0-5, her own clock
+  const stride = STRIDES[block % STRIDES.length];
   const here = (lat == null || lon == null)
     ? 0
     : Math.round(Math.abs(lat)) + Math.round(Math.abs(lon));
   FLOWERS.forEach((f,i)=>{
-    const seed = (day + here + i * 7) % 10;
+    const seed = (day + block * 3 + here + i * stride) % 10;
     state.counts[f.id] = Math.floor(seed / 3);   // 0-3 stems of each type
   });
 }
