@@ -13,11 +13,12 @@ export default function TestPushPage() {
     <PageShell title="Test push" subtitle="checking the deploy pipeline">
       <blockquote>
         <p>
-          &ldquo;Life is suffering. It is hard. The world is cursed. But still,
-          you find reasons to keep on living.&rdquo;
+          &ldquo;I&rsquo;m as human as anyone. I love, I get scared. I wake up
+          every morning and, despite not knowing what to do, I put one foot in
+          front of the other and I try to make the best choices I can.&rdquo;
         </p>
         <footer>
-          — Ashitaka, <cite>Princess Mononoke</cite>
+          — Superman, <cite>Superman</cite>
         </footer>
       </blockquote>
     </PageShell>
