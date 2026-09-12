@@ -96,7 +96,7 @@ export default function Lightbox({
       {/* In quiet (screensaver) mode a tap anywhere exits, so clicks are
           allowed to reach the backdrop. In album mode they must not. */}
       <div
-        className={styles.stage}
+        className={`${styles.stage} ${!quiet && item.caption ? styles.withCaption : ""}`}
         onClick={(e) => {
           if (!quiet) e.stopPropagation();
         }}
