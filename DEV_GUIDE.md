@@ -15,13 +15,15 @@ content/          <-- EVERYTHING YOU'LL NORMALLY EDIT IS IN HERE
   post-its.json        the messages on the post-it wall
   date-ideas.json      the list of date ideas
   screensavers.json    which images appear as screensavers
+  guide.json           the two shortcuts and the steps to set them up
 
 public/           <-- THE ACTUAL IMAGE FILES GO IN HERE
   photos/              album photos
   screensavers/        screensaver images
+  guide/               shortcut icons and the setup screenshots
   bouquet-studio.html  the whole bouquet page, in one file (see section 3)
 
-app/              six of the seven pages, plus the front door and one unlisted
+app/              seven of the eight pages, plus the front door and one unlisted
                   easter egg (code — leave alone unless adding a page)
 components/       shared pieces used by more than one page
 lib/              the small bits of logic (date matching)
@@ -34,7 +36,7 @@ The bouquet page is the odd one out: it's a single self-contained file in
 `public/`, not a folder in `app/`. Section 3 explains why and what you can
 safely change in it.
 
-The seven pages, and which sticker goes where:
+The eight pages, and which sticker goes where:
 
 | Address (what the sticker points at) | What it is |
 |---|---|
@@ -45,6 +47,10 @@ The seven pages, and which sticker goes where:
 | `/postits` | post-it wall |
 | `/surprise` | the flower animation |
 | `/screensavers` | screensaver gallery |
+| `/guide` | how to install the two iPhone shortcuts (no sticker) |
+
+`/guide` is the odd one out: it's instructions rather than a gift, and no
+sticker points at it — you hand her the address. See section 8.
 
 ---
 
@@ -190,6 +196,56 @@ roughly 16:9, the same shape as a TV or a phone held sideways. A portrait
 image still works, it just gets cropped down to a wide strip. Full screen,
 they fill the whole display: nearly perfect if she turns the phone sideways,
 cropped in a bit if she holds it upright.
+
+### The shortcuts guide
+
+`/guide` explains how to install the two iPhone shortcuts — the parts of this
+that a web page isn't allowed to set up by itself. It's driven by
+`content/guide.json`, which has two lists in it:
+
+```json
+{
+  "shortcuts": [
+    {
+      "name": "Prender la lampara",
+      "icon": "shortcut-1.png",
+      "url": "https://www.icloud.com/shortcuts/abc123",
+      "note": "lo que hace, en una linea"
+    }
+  ],
+  "steps": [
+    { "file": "step-01.png", "caption": "Abre el atajo y dale a Configurar" }
+  ]
+}
+```
+
+**`shortcuts`** is the "Que descargar?" list — one card each:
+
+- `name` is what she sees. `note` is the one-line explanation, and `""` hides it.
+- `icon` is a file in `public/guide/`. Make it **square** — an off-square image
+  gets cropped rather than squashed, but it'll lose an edge.
+- `url` is the `https://www.icloud.com/shortcuts/...` link iCloud gives you when
+  you share a shortcut.
+
+**`steps`** is the numbered "Como configurar" list — one card each, in order:
+
+- `file` is a screenshot in `public/guide/`. Straight off the iPhone is right;
+  they're shown small and she taps one to see it full screen, where she can
+  swipe through the whole tutorial.
+- `caption` is the line of instructions above it.
+
+Add or remove steps freely — the numbers are worked out from the order in the
+list, so you never renumber anything by hand.
+
+**Anything left as `""` shows a dashed placeholder instead of breaking.** An
+empty `url` shows a greyed-out "link pendiente" that can't be tapped, and an
+empty `file` shows an empty screenshot box. That's deliberate, so the page can
+go live before you've finished gathering the screenshots — but it does mean a
+**typo in a filename looks exactly like a finished card with a missing image**,
+so check the spelling and the `.png` on the end.
+
+Screenshots off a phone are a couple of megabytes each. Run them through
+https://squoosh.app first — see section 8.
 
 ### The bouquet page
 
@@ -351,7 +407,8 @@ The folder name **is** the web address, so name it carefully the first time.
 (The bouquet page doesn't follow this pattern — it's a plain HTML file in
 `public/`, pointed at `/bouquet` by a couple of lines in `next.config.ts`. That
 was a one-off because it's a self-contained 3D program. Stick to the folder
-recipe above for anything new.)
+recipe above for anything new. `/guide` was added this way and took about ten
+minutes, most of it writing the words.)
 
 ---
 
@@ -364,6 +421,10 @@ longer a precaution: renaming a folder makes a real sticker lead to a dead page,
 and you can't fix that from in here; you'd have to rewrite the sticker itself.
 The same goes for `/bouquet`: don't rename `public/bouquet-studio.html` without
 changing the matching line in `next.config.ts`, or that sticker dies too.
+
+**`app/guide/` is the exception — for now.** No sticker points at `/guide`, so
+it's the only route name still safe to change. The moment you write it to a
+sticker, it joins the list above.
 
 **Compress photos before adding them.** A photo straight off a phone can be
 8 MB, which is painfully slow over mobile data. Aim for **under 300 KB each** —
@@ -380,7 +441,7 @@ stops the whole site from building.
 **The post-it wall forgetting everything is intentional.** Notes vanish when the
 page is closed. That's by design, not a bug.
 
-**There's an eighth page, and it's meant to be there.** `/testpush` was built to
+**There's a ninth page, and it's meant to be there.** `/testpush` was built to
 prove that pushing to GitHub really does rebuild the site. It does, and the page
 was kept as an unlisted easter egg — no sticker points at it, nothing links to
 it, and it holds a quote that gets swapped now and then. It isn't leftover

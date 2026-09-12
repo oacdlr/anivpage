@@ -1,0 +1,21 @@
+{
+  "shortcuts": [
+    {
+      "name": "Atajo 1",
+      "icon": "",
+      "url": "",
+      "note": "que hace, en una linea"
+    },
+    {
+      "name": "Atajo 2",
+      "icon": "",
+      "url": "",
+      "note": ""
+    }
+  ],
+  "steps": [
+    { "file": "", "caption": "Primer paso" },
+    { "file": "", "caption": "Segundo paso" },
+    { "file": "", "caption": "Tercer paso" }
+  ]
+}

@@ -1,0 +1,255 @@
+.section {
+  margin-top: 34px;
+}
+
+.section:first-child {
+  margin-top: 0;
+}
+
+.heading {
+  text-align: center;
+}
+
+.sectionNote {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  margin: -4px 0 16px;
+}
+
+/* ---------------- Que descargar? ---------------- */
+
+.downloads {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  /* Wraps the pill onto its own line rather than crushing the name on a
+     narrow phone. */
+  flex-wrap: wrap;
+  gap: 14px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 14px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  animation: rise 0.5s ease backwards;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow);
+}
+
+/* Not a link yet — so it must not feel like one. */
+.cardIdle:active {
+  transform: none;
+  box-shadow: var(--shadow-sm);
+}
+
+.icon {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  border-radius: 15px;
+  /* An icon exported slightly off-square gets cropped, never stretched. */
+  object-fit: cover;
+  box-shadow: var(--shadow-sm);
+}
+
+.iconEmpty {
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--blue-soft);
+  background: rgba(219, 231, 246, 0.4);
+  box-shadow: none;
+  font-size: 0.68rem;
+  color: var(--ink-soft);
+  letter-spacing: 0.04em;
+}
+
+.cardText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  /* Lets long text shrink instead of pushing the pill off the card. */
+  flex: 1 1 130px;
+  min-width: 0;
+}
+
+.cardName {
+  font-weight: 600;
+  font-size: 1.02rem;
+}
+
+.cardNote {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+/* On a phone there isn't room for this beside the name without squeezing it,
+   so it takes its own line and the full width — a bigger thing to tap, too. */
+.pill {
+  flex: none;
+  width: 100%;
+  margin-top: 2px;
+  border-radius: 999px;
+  padding: 10px 17px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: center;
+  background: var(--blue);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.pillEmpty {
+  background: var(--surface);
+  color: var(--ink-soft);
+  border: 1.5px solid var(--blue-soft);
+  box-shadow: none;
+}
+
+@media (min-width: 480px) {
+  .pill {
+    width: auto;
+    margin-top: 0;
+    margin-left: auto;
+  }
+}
+
+/* ---------------- Como configurar ---------------- */
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+  animation: rise 0.5s ease backwards;
+}
+
+.stepHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.badge {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--blue);
+  color: #fff;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1rem;
+  font-weight: 600;
+  /* The serif digits sit high in the circle without this. */
+  line-height: 1;
+  padding-top: 1px;
+}
+
+.stepCaption {
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+/* Screenshots are phone-shaped, so a small one is plenty here — the point of
+   the thumbnail is to recognise the screen, and a tap opens it properly. */
+.shot {
+  display: block;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 190px;
+  border: none;
+  padding: 0;
+  background: none;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease;
+}
+
+.shot:active {
+  transform: scale(0.97);
+}
+
+.shotImg {
+  width: 100%;
+  height: auto;
+}
+
+.shotEmpty {
+  margin: 0 auto;
+  width: 100%;
+  max-width: 190px;
+  /* The shape of an upright iPhone screenshot, so the empty page lays out at
+     the height the finished one will. */
+  aspect-ratio: 9 / 19.5;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--blue-soft);
+  border-radius: var(--radius-sm);
+  background: rgba(219, 231, 246, 0.4);
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+}
+
+/* Past phone width there's room to sit the screenshot beside its caption.
+   Stacked, a screenshot this tall leaves the rest of the card empty. */
+@media (min-width: 560px) {
+  .step {
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .stepHead {
+    flex: 1;
+    margin-bottom: 0;
+  }
+
+  .shot,
+  .shotEmpty {
+    /* No auto margins here: in a flex row they'd eat the free space and
+       shove the screenshot back off the right edge. */
+    margin: 0;
+    flex: none;
+    max-width: 170px;
+  }
+}
+
+.empty {
+  text-align: center;
+  color: var(--ink-soft);
+  padding: 30px 10px;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
