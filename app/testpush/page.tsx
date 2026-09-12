@@ -14,10 +14,10 @@ export default function TestPushPage() {
     <PageShell title="Test push" subtitle="checking the deploy pipeline">
       <blockquote>
         <p>
-          &ldquo;Would You Fall in Love With Me Again&rdquo;
+          &ldquo;Helpless&rdquo;
         </p>
         <footer>
-          — <cite>EPIC: The Musical</cite>
+          — <cite>Hamilton</cite>
         </footer>
       </blockquote>
     </PageShell>
