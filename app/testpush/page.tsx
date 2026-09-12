@@ -14,10 +14,11 @@ export default function TestPushPage() {
     <PageShell title="Test push" subtitle="checking the deploy pipeline">
       <blockquote>
         <p>
-          &ldquo;A queen is never late. Everyone else is simply early.&rdquo;
+          &ldquo;We&rsquo;re all traveling through time together, every day of
+          our lives.&rdquo;
         </p>
         <footer>
-          — Queen Clarisse Renaldi, <cite>The Princess Diaries</cite>
+          — Tim Lake, <cite>About Time</cite>
         </footer>
       </blockquote>
     </PageShell>
