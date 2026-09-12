@@ -53,11 +53,28 @@
   border-radius: 2px;
 }
 
-/* Reserve room for the caption instead of printing it over the picture. An
-   upright phone screenshot reaches the bottom of the screen, so without this
-   the words land on the part of the image they're describing. */
+/* With a caption, stack it under the picture in normal flow rather than
+   printing it on top. An upright phone screenshot reaches the bottom of the
+   screen, so overlaid text lands on the part of the image it describes.
+   Laying it out in flow also means any caption length works — reserving a
+   fixed strip only ever fits the captions you happened to test with.
+   Scoped to captioned, non-quiet mode; the screensaver path is untouched. */
 .withCaption {
-  padding-bottom: calc(62px + env(safe-area-inset-bottom));
+  flex-direction: column;
+  gap: 14px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+}
+
+.withCaption .imageWrap {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+
+.withCaption .caption {
+  position: static;
+  flex: none;
+  max-width: 60ch;
 }
 
 /* Screensaver mode fills the screen edge to edge. */
