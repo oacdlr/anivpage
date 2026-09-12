@@ -1,21 +1,34 @@
 {
   "shortcuts": [
     {
-      "name": "Atajo 1",
-      "icon": "",
-      "url": "",
-      "note": "que hace, en una linea"
+      "name": "Candle",
+      "icon": "shortcut-1.png",
+      "url": "https://www.icloud.com/shortcuts/60343411492b4a58aaad6a673c6eabb4",
+      "note": "abre candle"
     },
     {
-      "name": "Atajo 2",
-      "icon": "",
-      "url": "",
-      "note": ""
+      "name": "Photo",
+      "icon": "shortcut-2.png",
+      "url": "https://www.icloud.com/shortcuts/b9b720a099ed4fd880a3ad28090dba8d",
+      "note": "fotos rapidas"
     }
   ],
   "steps": [
-    { "file": "", "caption": "Primer paso" },
-    { "file": "", "caption": "Segundo paso" },
-    { "file": "", "caption": "Tercer paso" }
+    {
+      "file": "step-01.jpeg",
+      "caption": "Abre Atajos, ve a Automation y dale al + de arriba a la derecha"
+    },
+    {
+      "file": "step-02.jpeg",
+      "caption": "Baja hasta NFC, escanea el sticker y ponle un nombre"
+    },
+    {
+      "file": "step-03.jpeg",
+      "caption": "Elige Run Immediately para que no te pregunte cada vez"
+    },
+    {
+      "file": "step-04.jpeg",
+      "caption": "En My Shortcuts elige Candle o Photo, el que quieras que abra"
+    }
   ]
 }

@@ -199,8 +199,9 @@ cropped in a bit if she holds it upright.
 
 ### The shortcuts guide
 
-`/guide` explains how to install the two iPhone shortcuts — the parts of this
-that a web page isn't allowed to set up by itself. It's driven by
+`/guide` covers the parts a web page isn't allowed to set up by itself: it hands
+her the two shortcuts to install, then walks her through building the **NFC
+automation** that runs one when she taps a sticker. It's driven by
 `content/guide.json`, which has two lists in it:
 
 ```json
@@ -214,7 +215,7 @@ that a web page isn't allowed to set up by itself. It's driven by
     }
   ],
   "steps": [
-    { "file": "step-01.png", "caption": "Abre el atajo y dale a Configurar" }
+    { "file": "step-01.jpeg", "caption": "Baja hasta NFC y escanea el sticker" }
   ]
 }
 ```
@@ -232,7 +233,11 @@ that a web page isn't allowed to set up by itself. It's driven by
 - `file` is a screenshot in `public/guide/`. Straight off the iPhone is right;
   they're shown small and she taps one to see it full screen, where she can
   swipe through the whole tutorial.
-- `caption` is the line of instructions above it.
+- `caption` is the line of instructions above it. **Her phone is in English**,
+  so these deliberately keep the button names in English (`Automation`,
+  `Run Immediately`, `My Shortcuts`) inside Spanish sentences — they have to
+  match what's actually on her screen. If she ever switches her phone to
+  Spanish, these are the words to change.
 
 Add or remove steps freely — the numbers are worked out from the order in the
 list, so you never renumber anything by hand.
@@ -242,7 +247,13 @@ empty `url` shows a greyed-out "link pendiente" that can't be tapped, and an
 empty `file` shows an empty screenshot box. That's deliberate, so the page can
 go live before you've finished gathering the screenshots — but it does mean a
 **typo in a filename looks exactly like a finished card with a missing image**,
-so check the spelling and the `.png` on the end.
+so check the spelling and the extension.
+
+**Mind the extensions here especially: the icons are `.png` and the screenshots
+are `.jpeg`.** They came from different places — the icons exported from the
+Shortcuts app, the screenshots straight off the phone — so this is the one file
+in the project where you can't assume every image ends the same way. Writing
+`.jpg` or `.png` for a screenshot gives you an empty box and no error.
 
 Screenshots off a phone are a couple of megabytes each. Run them through
 https://squoosh.app first — see section 8.
