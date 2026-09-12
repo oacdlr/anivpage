@@ -47,10 +47,10 @@ The eight pages, and which sticker goes where:
 | `/postits` | post-it wall |
 | `/surprise` | the flower animation |
 | `/screensavers` | screensaver gallery |
-| `/guide` | how to install the two iPhone shortcuts (no sticker) |
+| `/guide` | how to install the two iPhone shortcuts |
 
-`/guide` is the odd one out: it's instructions rather than a gift, and no
-sticker points at it — you hand her the address. See section 8.
+`/guide` is the odd one out only in what it's for: it's instructions rather
+than a gift. It has its own sticker like the rest.
 
 ---
 
@@ -426,16 +426,13 @@ minutes, most of it writing the words.)
 ## 8. Things that will bite you
 
 **Don't rename the route folders.** `album`, `letter`, `date`, `postits`,
-`surprise`, `screensavers` — the NFC stickers are written and in her hands, and
+`surprise`, `screensavers`, `guide` — the NFC stickers are written and in her
+hands, and
 they are physically programmed to point at those exact addresses. This is no
 longer a precaution: renaming a folder makes a real sticker lead to a dead page,
 and you can't fix that from in here; you'd have to rewrite the sticker itself.
 The same goes for `/bouquet`: don't rename `public/bouquet-studio.html` without
 changing the matching line in `next.config.ts`, or that sticker dies too.
-
-**`app/guide/` is the exception — for now.** No sticker points at `/guide`, so
-it's the only route name still safe to change. The moment you write it to a
-sticker, it joins the list above.
 
 **Compress photos before adding them.** A photo straight off a phone can be
 8 MB, which is painfully slow over mobile data. Aim for **under 300 KB each** —
