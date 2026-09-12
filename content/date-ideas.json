@@ -138,5 +138,68 @@
     "location": "outdoor",
     "budget": "low",
     "description": "Caminar sin rumbo tomándonos fotos random, luego elegir juntos las mejores."
+  },
+  {
+    "title": "Cena hecha por nosotros con velas",
+    "mood": "romantic",
+    "location": "indoor",
+    "budget": "medium",
+    "description": "Cocinar algo un poco más elaborado de lo normal, poner la mesa bonita y apagar las luces normales. o podemos volver a cenar poppers y spaggethi"
+  },
+  {
+    "title": "Alberca o río o kayaks o algo de agua",
+    "mood": "adventurous",
+    "location": "outdoor",
+    "budget": "medium",
+    "description": "Un día de agua, toallas, algo de comer"
+  },
+  {
+    "title": "Planetario",
+    "mood": "calm",
+    "location": "indoor",
+    "budget": "low",
+    "description": "Ir al planetario otra vez"
+  },
+  {
+    "title": "Power point night",
+    "mood": "calm",
+    "location": "indoor",
+    "budget": "low",
+    "description": "preparar powerpoints de 5-10 slides sobre algo random y presentarlos pero ahora si"
+  },
+  {
+    "title": "Explorar un mercado local",
+    "mood": "calm",
+    "location": "outdoor",
+    "budget": "low",
+    "description": "Caminar entre puestos, probar algo que no hayamos probado y comprar algo pequeño de recuerdo."
+  },
+  {
+    "title": "Noche de tacos callejeros",
+    "mood": "silly",
+    "location": "outdoor",
+    "budget": "medium",
+    "description": "Recorrer puestos, cada quien elige uno y calificamos como jueces exigentes."
+  },
+  {
+    "title": "Dia de panaderias random",
+    "mood": "silly",
+    "location": "outdoor",
+    "budget": "medium",
+    "description": "Recorrer panaderias, cada quien elige uno y calificamos como jueces exigentes.,no se vale funar por comer mucho pan"
+  },
+  {
+    "title": "Maratón de una serie nueva",
+    "mood": "lazy",
+    "location": "indoor",
+    "budget": "low",
+    "description": "Elegir algo que ninguno haya visto, pedir comida y no movernos del sillón."
+  },
+  {
+    "title": "Six u Otro parque de atracciones",
+    "mood": "adventurous",
+    "location": "outdoor",
+    "budget": "treat ourselves",
+    "description": "ir a six flags o a otro parque de atracciones y subirnos a todo lo que podamos"
   }
 ]

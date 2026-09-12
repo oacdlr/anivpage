@@ -2,52 +2,45 @@
 
 Last updated: 12 September 2026. Live at https://anivpage.vercel.app
 
-All eight pages are built, deployed, and running on your real content. The date
-form emails for real, the stickers are written, and the site has been tapped
-through on a phone. **The letter is the only thing standing between this and
-finished.**
+All eight pages are built, deployed, and running on your real content. The
+letter is written, the album is captioned, the date list has been filled out,
+the form emails for real, all eight stickers are written, and the site has been
+tapped through on a phone.
 
----
-
-## Blockers
-
-Things the gift genuinely doesn't work without.
-
-### 1. Write the letter
-
-`content/letter.md` still contains `lorem ipsum` and keyboard mash. `/letter` is
-the one page that is nothing but text, so it's currently the weakest page on the
-site by a wide margin.
-
-Leave a blank line between paragraphs — that's what makes a new paragraph.
+**Nothing is blocking any more. The gift is done.** What's below is polish.
 
 ---
 
 ## Content — worth doing, won't stop the gift working
 
-### 2. Captions for the album
+### 1. Five album captions
 
-All 52 photos are in and laid out, but every caption is still blank. They're
-optional — the album reads fine without them — but a line on the handful that
-have a story is the difference between a gallery and an album.
+47 of the 52 photos have captions. These five don't, and may not need one:
 
-Open `content/album.json` and fill in the `"caption"` for the ones worth it.
+`photo-22`, `photo-28`, `photo-29`, `photo-42`, `photo-45`
 
-### 3. Thin spots in the date ideas
+Open `content/album.json` and fill in the `"caption"` if they have a story.
 
-The list is at 20 ideas over 6 moods × 3 locations × 3 budgets, so most exact
-combinations still have no match. The form never fails — it relaxes to
-two-out-of-three, then one — but she can answer three questions and get
-something that ignores them.
+### 2. Thin spots in the date ideas
 
-`lazy` is most of the reason: it still has exactly **one** idea in it (indoor,
-cheap), so Lazy + Outdoors, or Lazy at any higher budget, can never match
-properly. `cozy` has two, and both are `low`. `treat ourselves` is thin
-generally.
+The list is at **29 ideas** over 6 moods × 3 locations × 3 budgets, up from 20.
+The form never fails — it relaxes to two-out-of-three, then one — but 19 of the
+36 combinations she can actually answer still have no exact match, so she can
+answer three questions and get something that ignores one of them.
 
-Two or three more `lazy` ideas would fix the worst of it.
+Two moods are most of the reason, both sitting at **2 ideas**:
 
-### 4. Optional: better originals for 29 of the photos
+- `lazy` — both `indoor` + `low`, so **every** Lazy + Outdoors answer misses,
+  and so does Lazy at any budget above cheap.
+- `cozy` — one indoor, one outdoor, but both `low`.
+
+`treat ourselves` is thin generally: 4 ideas across all six moods, and none at
+all under `silly`, `calm` or `lazy`.
+
+A couple of `lazy` outdoor ideas and a `cozy` one above `low` would fix the
+worst of it.
+
+### 3. Optional: better originals for 29 of the photos
 
 Photos `photo-01` to `photo-29` came in as thumbnails — most under 500 pixels
 wide, the smallest 143. They have since been **normalized**: doubled in size by
@@ -61,7 +54,7 @@ still beat this.** Drop them into `public/photos/` under the same names, delete
 those names from `photos-originals/`, and push — no JSON or code changes. See
 `DEV_GUIDE.md` section 3.
 
-### 5. Optional: shrink the screensaver files
+### 4. Optional: shrink the screensaver files
 
 Seven of the nine are 700–900 KB (about 6.2 MB for the folder); `manzanas.jpg`
 and `manzanas_noche.jpg` are already fine at 135–175 KB. They're inefficiently
@@ -74,16 +67,14 @@ downloads the originals. Worth a pass through https://squoosh.app sometime.
 
 ## Settled — don't undo these by accident
 
-**The seven route names are now permanent.** The stickers are written and can't
-be rewritten from in here. Renaming `album`, `letter`, `date`, `postits`,
-`surprise`, `screensavers`, or moving `public/bouquet-studio.html`, kills the
-sticker that points at it. See `DEV_GUIDE.md` section 8. `/guide` is not on that
-list — nothing is written to a sticker for it yet.
+**The route names are permanent.** The stickers are written and can't be
+rewritten from in here. Renaming `album`, `letter`, `date`, `postits`,
+`surprise`, `screensavers`, `guide`, or moving `public/bouquet-studio.html`,
+kills the sticker that points at it. See `DEV_GUIDE.md` section 8.
 
-**`/guide` still has no sticker.** That's a decision, not an oversight: the only
-way she reaches it is you sending her the address. Until a sticker points at it,
-`/guide` is also the one route name still safe to rename (`DEV_GUIDE.md`
-section 8).
+**All eight route names are now permanent.** `/guide` got its sticker too, so
+it joins the other seven: renaming `app/guide/` now kills a real sticker
+(`DEV_GUIDE.md` section 8).
 
 **`/testpush` stays.** It was built to prove that pushing triggers a rebuild, it
 did, and it's now kept on purpose as an unlisted easter egg — no sticker points
