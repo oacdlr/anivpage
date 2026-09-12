@@ -20,15 +20,15 @@
     },
     {
       "file": "step-02.jpeg",
-      "caption": "Baja hasta NFC, escanea el sticker y ponle un nombre"
+      "caption": "Baja hasta NFC, escanea el sticker(conejo con fogata o conejo con camara) y ponle un nombre(yo recomiendo Candle y Photo)"
     },
     {
       "file": "step-03.jpeg",
-      "caption": "Elige Run Immediately para que no te pregunte cada vez"
+      "caption": "Elige Run Immediately para que no te pregunte cada vez(puedes no activar el de notify)"
     },
     {
       "file": "step-04.jpeg",
-      "caption": "En My Shortcuts elige Candle o Photo, el que quieras que abra"
+      "caption": "En My Shortcuts elige Candle o Photo, el que quieras que abra,despues repetir con el otro"
     }
   ]
 }
