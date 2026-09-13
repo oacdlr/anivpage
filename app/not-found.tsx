@@ -5,9 +5,9 @@ export default function NotFound() {
     <main className={styles.wrap}>
       <div className={styles.card}>
         <div className={styles.mark}>🌷</div>
-        <h1>Wrong turn</h1>
+        <h1>Oops aqui no hay nada</h1>
         <p className={styles.line}>
-          There&apos;s nothing at this address. Try tapping the sticker again.
+          intentaste acceder a una página que no existe. Intenta tocar el sticker de nuevo.
         </p>
       </div>
     </main>

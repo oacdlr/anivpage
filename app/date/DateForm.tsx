@@ -98,8 +98,8 @@ export default function DateForm({ ideas }: { ideas: DateIdea[] }) {
           </div>
         </div>
 
-        {send === "sending" && <p className={styles.status}>sending it to him…</p>}
-        {send === "sent" && <p className={styles.status}>He knows. Consider it planned. ♥</p>}
+        {send === "sending" && <p className={styles.status}>Correo enviado</p>}
+        {send === "sent" && <p className={styles.status}>ya quedo,solo falta fecha. ♥</p>}
         {send === "failed" && (
           <p className={`${styles.status} ${styles.statusWarn}`}>
             Your date is picked, but the message didn&apos;t send. Screenshot this
