@@ -13,13 +13,9 @@ export default function TestPushPage() {
   return (
     <PageShell title="Test push" subtitle="checking the deploy pipeline">
       <blockquote>
-        <p>
-          &ldquo;Some special people come into our lives, do something for us,
-          and then they&rsquo;re gone. We&rsquo;re happy we met them,
-          aren&rsquo;t we?&rdquo;
-        </p>
+        <p>&ldquo;The show starts now.&rdquo;</p>
         <footer>
-          — Bandit Heeler, <cite>Bluey</cite> (&ldquo;Camping&rdquo;)
+          — Jesse Cole, Derek Klena and the Savannah Bananas
         </footer>
       </blockquote>
     </PageShell>
