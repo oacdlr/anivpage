@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Aquarium</title>
+<!-- A one-day stand-in for the flower room: next.config.ts points /bouquet here
+     instead of at bouquet-studio.html. Like that page it never passes through
+     app/layout.tsx, so the two tags below stand in for what the layout gives. -->
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#f2f7fc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* These mirror the site's shared theme in app/globals.css (same twins as in
+     bouquet-studio.html). */
+  :root{
+    color-scheme: light;
+    --sky:#f2f7fc;
+    --sky-deep:#e6eff9;
+    --blue:#8aa9d6;
+    --blue-deep:#5c7cb0;
+    --blue-dim:rgba(138,169,214,.42);
+    --petal:#f3c6d5;
+    --leaf:#a8c8b0;
+    --ink:#2f3b52;
+    --ink-soft:#6b7b94;
+    --sans:'Quicksand',system-ui,-apple-system,'Segoe UI',sans-serif;
+    --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--sky);color:var(--ink);
+    font-family:var(--sans);font-weight:400;-webkit-font-smoothing:antialiased;
+    overflow:hidden;
+  }
+  #stage{position:relative;width:100%;height:100vh;height:100dvh;background:
+    radial-gradient(circle at 12% 8%, rgba(243,198,213,.30), transparent 42%),
+    radial-gradient(circle at 88% 12%, rgba(216,205,234,.30), transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(138,169,214,.28), transparent 55%),
+    linear-gradient(180deg, var(--sky) 0%, var(--sky-deep) 100%);}
+  #scene{display:block;width:100%;height:100%;touch-action:none}
+  #title{
+    position:absolute;left:24px;top:20px;margin:0;pointer-events:none;
+    font-family:var(--serif);font-weight:500;font-size:30px;letter-spacing:.01em;color:var(--ink);
+  }
+  #title span{
+    display:block;margin-top:2px;font-family:var(--sans);font-size:11px;font-weight:600;
+    letter-spacing:.22em;text-transform:uppercase;color:var(--blue-deep);
+  }
+  #fed{
+    position:absolute;right:24px;top:26px;pointer-events:none;
+    font-family:var(--serif);font-style:italic;font-size:15px;color:var(--ink-soft);
+    opacity:0;transition:opacity .8s ease;
+  }
+  #fed.on{opacity:1}
+  #overlay{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    flex-direction:column;gap:14px;background:rgba(242,247,252,.92);
+    font-family:var(--serif);font-style:italic;font-size:19px;letter-spacing:.02em;
+    color:var(--ink-soft);transition:opacity .7s ease;z-index:4;
+  }
+  #overlay.gone{opacity:0;pointer-events:none}
+  .ring{width:34px;height:34px;border-radius:50%;border:1px solid var(--blue-dim);
+    border-top-color:var(--blue-deep);animation:spin 1.1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #hint{
+    position:absolute;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);
+    font-size:11.5px;letter-spacing:.14em;color:var(--ink-soft);
+    pointer-events:none;transition:opacity .8s ease;white-space:nowrap;
+  }
+  #hint.gone{opacity:0}
+  @media (max-width:600px){
+    #title{left:16px;top:16px;font-size:26px}
+    #fed{right:16px;top:22px;font-size:14px}
+    #hint{font-size:10.5px;letter-spacing:.1em}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .ring{animation:none}
+  }
+</style>
+</head>
+<body>
+<main id="stage">
+  <canvas id="scene"></canvas>
+  <h1 id="title">The Aquarium<span>For one day only</span></h1>
+  <div id="fed"></div>
+  <div id="hint">TAP THE WATER TO FEED THEM &nbsp;·&nbsp; DRAG TO LOOK AROUND</div>
+  <div id="overlay"><div class="ring"></div><div id="ovtext">Filling the tank…</div></div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/math/SimplexNoise.js"></script>
+
+<script>
+(function(){
+'use strict';
+
+/* ============================================================
+   0 · Guards
+   ============================================================ */
+const ov = document.getElementById('overlay');
+if(!window.THREE || !THREE.OrbitControls){
+  ov.innerHTML = '<div style="max-width:320px;text-align:center;line-height:1.6">The 3D library could not be loaded. Check the network connection and reload.</div>';
+  return;
+}
+if(THREE.ColorManagement) THREE.ColorManagement.legacyMode = false;
+
+const MU = THREE.MathUtils;
+const rand = (a,b) => a + Math.random()*(b-a);
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+const CALM = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const PACE = CALM ? 0.55 : 1;
+
+/* ============================================================
+   1 · The tank's measurements (metres-ish; y=0 is the sand)
+   ============================================================ */
+const W = 4.2, H = 2.5, D = 2.2;
+const WATER = H - 0.16;                       // the water line
+const BOUND = {                               // where fish may swim
+  x: W/2 - 0.3, z: D/2 - 0.25, yMin: 0.35, yMax: WATER - 0.22
+};
+
+/* ============================================================
+   2 · Renderer, scene, camera, controls
+   ============================================================ */
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true, powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, window.innerWidth<900?1.5:2));
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.setClearColor(0x000000, 0);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(38, 1, 0.05, 60);
+
+try{
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new THREE.RoomEnvironment(renderer), 0.04).texture;
+}catch(e){ /* plain lights are enough */ }
+
+scene.add(new THREE.HemisphereLight(0xeaf4ff, 0xb9a98a, 0.7));
+const sun = new THREE.DirectionalLight(0xffffff, 1.1);
+sun.position.set(1.5, 6, 2.5);
+scene.add(sun);
+const glow = new THREE.PointLight(0x9fd0ff, 0.6, 9);
+glow.position.set(0, WATER + 0.6, 0);
+scene.add(glow);
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.07;
+controls.rotateSpeed = 0.55;
+controls.enablePan = false;
+controls.minPolarAngle = 0.55;
+controls.maxPolarAngle = Math.PI * 0.56;
+controls.minAzimuthAngle = -1.05;
+controls.maxAzimuthAngle = 1.05;
+controls.target.set(0, H*0.45, 0);
+
+function frameCamera(){
+  const w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  // Back off far enough that the whole tank fits, wide screen or tall phone.
+  const vFov = MU.degToRad(camera.fov);
+  const hFov = 2*Math.atan(Math.tan(vFov/2)*camera.aspect);
+  const needW = (W + 0.7) / 2 / Math.tan(hFov/2);
+  const needH = (H + 1.4) / 2 / Math.tan(vFov/2);
+  const dist = Math.max(needW, needH) + D/2;
+  controls.minDistance = dist * 0.55;
+  controls.maxDistance = dist * 1.35;
+  return dist;
+}
+function resize(){
+  const w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight;
+  renderer.setSize(w, h, false);
+  frameCamera();
+}
+const startDist = frameCamera();
+camera.position.set(0, H*0.62, startDist);
+controls.update();
+window.addEventListener('resize', resize);
+resize();
+
+/* ============================================================
+   3 · Textures drawn on the fly
+   ============================================================ */
+const noise = THREE.SimplexNoise ? new THREE.SimplexNoise() : null;
+const n2 = (x,y) => noise ? noise.noise(x,y) : Math.sin(x*2.1+Math.cos(y*1.7))*Math.cos(y*2.3+Math.sin(x*1.3));
+
+// Caustics: bright thin webs, the light pattern you see on a pool floor.
+function causticTexture(seed){
+  const S = 256, c = document.createElement('canvas'); c.width = c.height = S;
+  const g = c.getContext('2d'), img = g.createImageData(S,S);
+  for(let y=0;y<S;y++) for(let x=0;x<S;x++){
+    // Tileable: sample noise on a torus.
+    const a = x/S*Math.PI*2, b = y/S*Math.PI*2;
+    const nx = Math.cos(a)*1.3 + seed, ny = Math.sin(a)*1.3, nz = Math.cos(b)*1.3, nw = Math.sin(b)*1.3;
+    const v = noise && noise.noise4d ? noise.noise4d(nx,ny,nz,nw) : n2(nx+nz, ny+nw);
+    const line = Math.pow(1 - Math.min(1, Math.abs(v)*3.2), 3.2);
+    const i = (y*S+x)*4;
+    img.data[i] = img.data[i+1] = img.data[i+2] = 255;
+    img.data[i+3] = line*255;
+  }
+  g.putImageData(img,0,0);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return t;
+}
+
+// The back wall: a soft vertical wash, pale at the top, deeper at the bottom.
+function backdropTexture(){
+  const c = document.createElement('canvas'); c.width = 8; c.height = 256;
+  const g = c.getContext('2d');
+  const grad = g.createLinearGradient(0,0,0,256);
+  grad.addColorStop(0, '#cfe6f6');
+  grad.addColorStop(0.55, '#9cc3e6');
+  grad.addColorStop(1, '#6f9cc9');
+  g.fillStyle = grad; g.fillRect(0,0,8,256);
+  const t = new THREE.CanvasTexture(c);
+  t.encoding = THREE.sRGBEncoding;
+  return t;
+}
+
+/* ============================================================
+   4 · The tank: stand, glass, back wall, water surface
+   ============================================================ */
+const tank = new THREE.Group();
+scene.add(tank);
+
+const stand = new THREE.Mesh(
+  new THREE.BoxGeometry(W + 0.3, 0.5, D + 0.3),
+  new THREE.MeshStandardMaterial({color:0xf6f1e7, roughness:0.55})
+);
+stand.position.y = -0.25 - 0.06;
+tank.add(stand);
+const lip = new THREE.Mesh(
+  new THREE.BoxGeometry(W + 0.12, 0.06, D + 0.12),
+  new THREE.MeshStandardMaterial({color:0x5c7cb0, roughness:0.4})
+);
+lip.position.y = -0.03;
+tank.add(lip);
+const rim = lip.clone();
+rim.position.y = H + 0.03;
+tank.add(rim);
+
+const back = new THREE.Mesh(
+  new THREE.PlaneGeometry(W, H),
+  new THREE.MeshBasicMaterial({map:backdropTexture(), toneMapped:false})
+);
+back.position.set(0, H/2, -D/2 + 0.01);
+tank.add(back);
+
+// The glass: four faint panes. depthWrite off so the fish behind them show.
+const glassMat = new THREE.MeshPhysicalMaterial({
+  color:0xdff0ff, metalness:0, roughness:0.05, transparent:true, opacity:0.14,
+  envMapIntensity:1.2, side:THREE.DoubleSide, depthWrite:false
+});
+[[0,H/2,D/2,0],[ -W/2,H/2,0,Math.PI/2],[W/2,H/2,0,Math.PI/2]].forEach(([x,y,z,ry])=>{
+  const pane = new THREE.Mesh(new THREE.PlaneGeometry(ry ? D : W, H), glassMat);
+  pane.position.set(x,y,z); pane.rotation.y = ry; pane.renderOrder = 3;
+  tank.add(pane);
+});
+const edges = new THREE.LineSegments(
+  new THREE.EdgesGeometry(new THREE.BoxGeometry(W, H, D)),
+  new THREE.LineBasicMaterial({color:0xffffff, transparent:true, opacity:0.55})
+);
+edges.position.y = H/2;
+tank.add(edges);
+
+// A faint aqua tint through the whole volume, seen through the front.
+const tint = new THREE.Mesh(
+  new THREE.BoxGeometry(W - 0.02, WATER, D - 0.02),
+  new THREE.MeshBasicMaterial({color:0x8fc4ea, transparent:true, opacity:0.10, depthWrite:false, side:THREE.BackSide})
+);
+tint.position.y = WATER/2;
+tint.renderOrder = 2;
+tank.add(tint);
+
+// Water surface, gently rippling.
+const surfGeo = new THREE.PlaneGeometry(W - 0.02, D - 0.02, 40, 22);
+surfGeo.rotateX(-Math.PI/2);
+const surfBase = surfGeo.attributes.position.array.slice();
+const surface = new THREE.Mesh(surfGeo, new THREE.MeshPhysicalMaterial({
+  color:0xb8dcf5, roughness:0.08, metalness:0, transparent:true, opacity:0.42,
+  side:THREE.DoubleSide, depthWrite:false, envMapIntensity:1.4
+}));
+surface.position.y = WATER;
+surface.renderOrder = 4;
+tank.add(surface);
+
+/* ============================================================
+   5 · Sand, pebbles, caustics
+   ============================================================ */
+const sandGeo = new THREE.PlaneGeometry(W - 0.02, D - 0.02, 70, 36);
+sandGeo.rotateX(-Math.PI/2);
+{
+  const p = sandGeo.attributes.position;
+  for(let i=0;i<p.count;i++){
+    const x = p.getX(i), z = p.getZ(i);
+    // Higher at the back, little dunes everywhere.
+    p.setY(i, 0.06 + (-z/D + 0.5)*0.16 + n2(x*1.4, z*1.4)*0.035 + n2(x*5, z*5)*0.008);
+  }
+  sandGeo.computeVertexNormals();
+}
+const sand = new THREE.Mesh(sandGeo, new THREE.MeshStandardMaterial({color:0xd8c39c, roughness:0.95}));
+tank.add(sand);
+const sandY = (x,z) => 0.06 + (-z/D + 0.5)*0.16 + n2(x*1.4, z*1.4)*0.035;
+
+const caustTex = [causticTexture(0), causticTexture(7.3)];
+const caustics = caustTex.map((tex,i)=>{
+  tex.repeat.set(2.2 + i*0.5, 1.2 + i*0.3);
+  const m = new THREE.Mesh(sandGeo, new THREE.MeshBasicMaterial({
+    map:tex, color:0xffffff, transparent:true, opacity:0.14,
+    blending:THREE.AdditiveBlending, depthWrite:false, toneMapped:false,
+    polygonOffset:true, polygonOffsetFactor:-1-i, polygonOffsetUnits:-1-i
+  }));
+  tank.add(m);
+  return m;
+});
+
+const pebbleCols = [0xf3c6d5, 0xdbe7f6, 0xa8c8b0, 0xf6f1e7, 0xc9b8a0, 0x8aa9d6];
+const pebbleGeo = new THREE.IcosahedronGeometry(1, 1);
+for(let i=0;i<70;i++){
+  const x = rand(-W/2+0.12, W/2-0.12), z = rand(-D/2+0.12, D/2-0.12);
+  const s = rand(0.025, 0.07);
+  const p = new THREE.Mesh(pebbleGeo, new THREE.MeshStandardMaterial({color:pick(pebbleCols), roughness:0.6}));
+  p.scale.set(s*rand(1,1.5), s*rand(0.5,0.8), s*rand(1,1.4));
+  p.position.set(x, sandY(x,z) + s*0.3, z);
+  p.rotation.y = rand(0, Math.PI);
+  tank.add(p);
+}
+
+// Two smooth stones to give the floor some landscape.
+[[-1.25,-0.55,0.32],[1.35,-0.35,0.24]].forEach(([x,z,s])=>{
+  const g = new THREE.IcosahedronGeometry(1, 3);
+  const p = g.attributes.position;
+  for(let i=0;i<p.count;i++){
+    const v = new THREE.Vector3().fromBufferAttribute(p,i);
+    v.multiplyScalar(1 + n2(v.x*1.5+x, v.z*1.5+v.y)*0.12);
+    p.setXYZ(i, v.x, v.y, v.z);
+  }
+  g.computeVertexNormals();
+  const rock = new THREE.Mesh(g, new THREE.MeshStandardMaterial({color:0xb7b2ad, roughness:0.85}));
+  rock.scale.set(s*1.5, s*1.05, s);
+  rock.position.set(x, sandY(x,z) + s*0.35, z);
+  tank.add(rock);
+});
+
+/* ============================================================
+   6 · Coral: little pink branching fans
+   ============================================================ */
+const coralMat = [
+  new THREE.MeshStandardMaterial({color:0xf3c6d5, roughness:0.7}),
+  new THREE.MeshStandardMaterial({color:0xd98fa8, roughness:0.7}),
+  new THREE.MeshStandardMaterial({color:0xf0a04b, roughness:0.7})
+];
+const tip = new THREE.SphereGeometry(1, 10, 8);
+function branch(parent, len, rad, depth, mat){
+  const g = new THREE.CylinderGeometry(rad*0.75, rad, len, 8);
+  g.translate(0, len/2, 0);
+  const m = new THREE.Mesh(g, mat);
+  parent.add(m);
+  if(depth <= 0){
+    const t = new THREE.Mesh(tip, mat); t.scale.setScalar(rad*0.9); t.position.y = len; m.add(t);
+    return m;
+  }
+  const kids = 2 + (Math.random() < 0.4 ? 1 : 0);
+  for(let k=0;k<kids;k++){
+    const holder = new THREE.Group();
+    holder.position.y = len * rand(0.75, 1);
+    holder.rotation.set(rand(-0.6,0.6), rand(0, Math.PI*2), rand(-0.7,0.7));
+    m.add(holder);
+    branch(holder, len*rand(0.6,0.8), rad*0.72, depth-1, mat);
+  }
+  return m;
+}
+[[-0.55,-0.6,0],[0.55,-0.7,1],[1.7,0.2,2],[-1.75,0.15,1]].forEach(([x,z,mi])=>{
+  const g = new THREE.Group();
+  g.position.set(x, sandY(x,z) - 0.02, z);
+  g.rotation.y = rand(0, Math.PI*2);
+  branch(g, rand(0.28,0.38), 0.045, 3, coralMat[mi]);
+  tank.add(g);
+});
+
+// An anemone near the front: the clownfish's home, tentacles waving.
+const ANEMONE = new THREE.Vector3(0.2, 0, 0.15);
+ANEMONE.y = sandY(ANEMONE.x, ANEMONE.z);
+const anemone = new THREE.Group();
+anemone.position.copy(ANEMONE);
+tank.add(anemone);
+{
+  const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 0.12, 20),
+    new THREE.MeshStandardMaterial({color:0xd9a0b8, roughness:0.6}));
+  foot.position.y = 0.04;
+  anemone.add(foot);
+}
+const tentGeo = new THREE.CylinderGeometry(0.008, 0.017, 0.24, 6);
+tentGeo.translate(0, 0.12, 0);
+const tentTipGeo = new THREE.SphereGeometry(0.013, 8, 6);
+const tentMat = new THREE.MeshStandardMaterial({color:0xc9a3dc, roughness:0.5});
+const tentTipMat = new THREE.MeshStandardMaterial({color:0xf3c6d5, roughness:0.4});
+const tentacles = [];
+for(let i=0;i<70;i++){
+  const a = i * Math.PI * (3 - Math.sqrt(5)), r = 0.12*Math.sqrt((i + 0.5)/70);
+  const m = new THREE.Mesh(tentGeo, tentMat);
+  m.position.set(Math.cos(a)*r, 0.09, Math.sin(a)*r);
+  const tip = new THREE.Mesh(tentTipGeo, tentTipMat);
+  tip.position.y = 0.24;
+  m.add(tip);
+  m.scale.y = rand(0.8, 1.25);
+  m.userData = {a, lean:0.2 + r*4, ph:rand(0, 6.28)};
+  anemone.add(m);
+  tentacles.push(m);
+}
+
+/* ============================================================
+   7 · Seaweed: ribbons that sway in the current
+   ============================================================ */
+const weedCols = [0xa8c8b0, 0x7fae8c, 0x93bfa0, 0x6f9f7c];
+const weeds = [];
+function addWeed(x, z, h){
+  const segs = 14;
+  const g = new THREE.PlaneGeometry(rand(0.05,0.09), h, 1, segs);
+  g.translate(0, h/2, 0);
+  const mat = new THREE.MeshStandardMaterial({color:pick(weedCols), roughness:0.6, side:THREE.DoubleSide});
+  const m = new THREE.Mesh(g, mat);
+  m.position.set(x, sandY(x,z) - 0.02, z);
+  m.rotation.y = rand(0, Math.PI);
+  tank.add(m);
+  weeds.push({m, base:g.attributes.position.array.slice(), h, phase:rand(0, Math.PI*2), amp:rand(0.08,0.16)});
+}
+for(let i=0;i<16;i++) addWeed(rand(-W/2+0.2, -W/2+1.1), rand(-D/2+0.15, -0.1), rand(0.8, 1.7));
+for(let i=0;i<16;i++) addWeed(rand(W/2-1.1, W/2-0.2), rand(-D/2+0.15, -0.1), rand(0.8, 1.7));
+for(let i=0;i<10;i++) addWeed(rand(-0.9, 0.9), rand(-D/2+0.1, -D/2+0.4), rand(1.2, 2.0));
+
+/* ============================================================
+   8 · Bubbles from a stone at the back corner
+   ============================================================ */
+const BUBBLES = 46;
+const bubbleMesh = new THREE.InstancedMesh(
+  new THREE.SphereGeometry(1, 12, 10),
+  new THREE.MeshPhysicalMaterial({color:0xffffff, roughness:0.05, transparent:true, opacity:0.5, envMapIntensity:1.6, depthWrite:false}),
+  BUBBLES
+);
+bubbleMesh.renderOrder = 5;
+tank.add(bubbleMesh);
+const sources = [new THREE.Vector3(-W/2+0.45, 0.2, -D/2+0.35), new THREE.Vector3(W/2-0.55, 0.2, -D/2+0.4)];
+const bubbles = [];
+for(let i=0;i<BUBBLES;i++){
+  bubbles.push({src:i%2, y:rand(0.2, WATER), r:rand(0.012,0.035), v:rand(0.35,0.6), ph:rand(0,6.28), dx:0, dz:0});
+}
+const dummy = new THREE.Object3D();
+
+/* ============================================================
+   9 · Fish
+   ============================================================ */
+// Every fish is built in its own space facing +z — nose at +L/2, the narrow
+// stalk before the tail at -L/2 — so Object3D.lookAt points its nose where it's
+// going. Fin points are written in units of the body length L, as (u, v):
+// u along the fish (forward +), v up. The body is lofted from a side profile and
+// a top profile, and every colour is painted per vertex.
+
+// One shared bend: the back half of the fish sways side to side while the head
+// stays steady, which is what makes them look like they swim rather than slide.
+// Body and fins of one fish share the same uniform objects, so they bend as one.
+function addBend(mat, U){
+  mat.onBeforeCompile = sh => {
+    sh.uniforms.uPhase = U.uPhase; sh.uniforms.uAmp = U.uAmp; sh.uniforms.uLen = U.uLen;
+    sh.vertexShader = 'uniform float uPhase;\nuniform float uAmp;\nuniform float uLen;\n' +
+      sh.vertexShader.replace('#include <begin_vertex>',
+        '#include <begin_vertex>\n' +
+        'float bendS = clamp((0.22*uLen - transformed.z)/(1.25*uLen), 0.0, 1.0);\n' +
+        'transformed.x += uAmp * uLen * bendS * bendS * sin(uPhase - bendS*3.2);');
+  };
+  return mat;
+}
+
+// Side/top profile. t runs 0 (tail stalk) → 1 (nose). H and Wd are the half
+// height and half width at the fattest point, in units of L. `e` < 1 makes a
+// blunt round fish, ~1 a pointed one; `stalk` keeps the tail end from pinching shut.
+function profile(o){
+  const remap = t => t < o.peak ? 0.5*t/o.peak : 0.5 + 0.5*(t-o.peak)/(1-o.peak);
+  const blend = (t, e, stalk) => {
+    const v = Math.pow(Math.max(0, Math.sin(Math.PI*remap(t))), e);
+    return v + stalk*Math.pow(1-t, 3)*(1-v);
+  };
+  return {
+    h: t => o.H * blend(t, o.e, o.stalk),
+    w: t => o.Wd * blend(t, o.ew || o.e, o.stalk*0.7),
+    top: u => o.H * blend(MU.clamp(u + 0.5, 0, 1), o.e, o.stalk)
+  };
+}
+
+function bodyGeo(L, P, paint){
+  const NS = 32, NA = 20, pos = [], col = [], idx = [], c = new THREE.Color();
+  const put = (x,y,z,t,vy,side) => { pos.push(x,y,z); paint(c, t, vy, side); col.push(c.r, c.g, c.b); };
+  put(0, 0, -L/2, 0, 0, 0);                              // centre of the tail-end cap
+  for(let i=0;i<=NS;i++){
+    const t = 0.002 + (i/NS)*0.985;
+    const h = Math.max(P.h(t)*L, 1e-4), w = Math.max(P.w(t)*L, 1e-4), z = -L/2 + t*L;
+    for(let j=0;j<NA;j++){
+      const a = j/NA*Math.PI*2, vy = Math.cos(a), side = Math.sin(a);
+      put(w*side, h*vy, z, t, vy, side);
+    }
+  }
+  const nose = pos.length/3;
+  put(0, 0, L/2, 1, 0, 0);
+  const ring = i => 1 + i*NA;
+  for(let j=0;j<NA;j++){
+    const j2 = (j+1) % NA;
+    idx.push(0, ring(0)+j, ring(0)+j2);
+    for(let i=0;i<NS;i++){
+      const a = ring(i)+j, b = ring(i)+j2, cc = ring(i+1)+j, d = ring(i+1)+j2;
+      idx.push(a, d, b, a, cc, d);
+    }
+    idx.push(nose, ring(NS)+j2, ring(NS)+j);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
+
+// A fin outline in (u, v), smoothed into a curve, then placed in 3D by `map`.
+function finGeo(pts, map, paint){
+  const s = new THREE.Shape();
+  s.moveTo(pts[0][0], pts[0][1]);
+  s.splineThru(pts.slice(1).concat([pts[0]]).map(p => new THREE.Vector2(p[0], p[1])));
+  const g = new THREE.ShapeGeometry(s, 6);
+  const p = g.attributes.position, cols = new Float32Array(p.count*3), c = new THREE.Color();
+  for(let i=0;i<p.count;i++){
+    const u = p.getX(i), v = p.getY(i), m = map(u, v);
+    p.setXYZ(i, m[0], m[1], m[2]);
+    paint(c, u, v);
+    cols[i*3] = c.r; cols[i*3+1] = c.g; cols[i*3+2] = c.b;
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+  g.computeVertexNormals();
+  return g;
+}
+
+const _mixC = new THREE.Color();
+const mix = (c, a, b, k) => c.setHex(a).lerp(_mixC.setHex(b), MU.clamp(k, 0, 1));
+const BLACK = 0x1a1b22;
+
+// The cast. Each entry: how it looks (shape, paint, fins, eye) and how it
+// behaves (speed, how hard it beats its tail, which depth it likes).
+const SPECIES = [
+  { // Clownfish: stubby orange body, three white bands edged in black.
+    name:'clownfish', n:3, len:0.26, speed:0.40, amp:0.15, beat:1.25, yLo:0.0, yHi:0.45, home:'anemone',
+    shape:{H:0.2, Wd:0.105, peak:0.55, e:0.7, stalk:0.35},
+    eye:{t:0.85, vy:0.3, r:0.048, iris:0xe8641a},
+    paint(c, t, vy){
+      for(const [tc, bw] of [[0.79 + 0.04*vy, 0.045], [0.50 + 0.07*vy, 0.055], [0.09, 0.03]]){
+        const d = Math.abs(t - tc);
+        if(d < bw) return c.setHex(0xfbfbf6);
+        if(d < bw + 0.018) return c.setHex(BLACK);
+      }
+      return mix(c, 0xf06a10, 0xf79a3a, (1 - vy)*0.2);
+    },
+    fins(T){
+      const edged = (c, u, v) => Math.abs(v) - T(u) > 0.045 ? c.setHex(BLACK)
+        : Math.abs(u) < 0.06 ? c.setHex(0xfbfbf6) : c.setHex(0xf06a10);
+      return [
+        {pts:[[-0.47,0.07],[-0.6,0.14],[-0.72,0.12],[-0.77,0],[-0.72,-0.12],[-0.6,-0.14],[-0.47,-0.07]],
+         paint:(c,u,v)=>{ const r = Math.hypot(u+0.47, v); return r > 0.25 ? c.setHex(0xfbfbf6) : r > 0.205 ? c.setHex(BLACK) : c.setHex(0xf06a10); }},
+        {pts:[[0.22,T(0.22)-0.03],[0.14,T(0.14)+0.06],[0.02,T(0.02)+0.05],[-0.06,T(-0.06)+0.035],[-0.15,T(-0.15)+0.09],[-0.3,T(-0.3)+0.085],[-0.4,T(-0.4)-0.01],[-0.1,T(-0.1)-0.03]], paint:edged},
+        {pts:[[-0.04,-(T(-0.04)-0.03)],[-0.12,-(T(-0.12)+0.07)],[-0.28,-(T(-0.28)+0.075)],[-0.37,-(T(-0.37)-0.01)]], paint:edged}
+      ];
+    },
+    pec:{t:0.66, pts:[[0,0],[-0.04,0.07],[-0.12,0.1],[-0.15,0.05],[-0.08,0]],
+         paint:(c,u,v)=> v > 0.075 ? c.setHex(BLACK) : c.setHex(0xf06a10)}
+  },
+  { // Blue tang: oval, flat, royal blue with the black "palette" swoosh and a yellow tail.
+    name:'bluetang', n:2, len:0.34, speed:0.42, amp:0.10, beat:1.0, yLo:0.2, yHi:0.9,
+    shape:{H:0.3, Wd:0.075, peak:0.5, e:0.72, stalk:0.24},
+    eye:{t:0.83, vy:0.3, r:0.04, iris:BLACK},
+    paint(c, t, vy){
+      const yc = 0.3 + 0.24*(0.5 - t);                   // the swoosh climbs toward the tail
+      const band = Math.abs(vy - yc) < 0.25 && t > 0.1 && t < 0.86;
+      const hole = Math.abs(vy - yc - 0.02) < 0.09 && t > 0.3 && t < 0.62;
+      if((band && !hole) || vy > 0.92) return c.setHex(BLACK);
+      return mix(c, 0x2a5fd6, 0x4486ec, (1 - vy)*0.3);
+    },
+    fins(T){
+      const edged = (c, u, v) => Math.abs(v) - T(u) > 0.045 ? c.setHex(BLACK) : c.setHex(0x2a5fd6);
+      return [
+        {pts:[[-0.47,0.06],[-0.58,0.14],[-0.73,0.25],[-0.68,0.09],[-0.66,0],[-0.68,-0.09],[-0.73,-0.25],[-0.58,-0.14],[-0.47,-0.06]],
+         paint:(c,u,v)=> Math.abs(v) > 0.035 + (-u-0.47)*0.55 ? c.setHex(BLACK) : c.setHex(0xf6c21f)},
+        {pts:[[0.3,T(0.3)-0.03],[0.2,T(0.2)+0.06],[-0.1,T(-0.1)+0.07],[-0.36,T(-0.36)+0.07],[-0.45,T(-0.45)],[-0.1,T(-0.1)-0.03]], paint:edged},
+        {pts:[[0.05,-(T(0.05)-0.03)],[-0.05,-(T(-0.05)+0.06)],[-0.36,-(T(-0.36)+0.06)],[-0.45,-T(-0.45)],[-0.15,-(T(-0.15)-0.03)]], paint:edged}
+      ];
+    },
+    pec:{t:0.68, pts:[[0,0],[-0.05,0.09],[-0.15,0.12],[-0.17,0.06],[-0.08,0]], paint:c=>c.setHex(0xf6c21f)}
+  },
+  { // Yellow tang: a tall lemon-yellow disc with a pointed snout.
+    name:'yellowtang', n:2, len:0.3, speed:0.40, amp:0.10, beat:1.0, yLo:0.15, yHi:0.85,
+    shape:{H:0.4, Wd:0.07, peak:0.42, e:0.95, stalk:0.2},
+    eye:{t:0.8, vy:0.35, r:0.04, iris:BLACK},
+    paint(c, t, vy){
+      if(t > 0.05 && t < 0.1 && Math.abs(vy) < 0.3) return c.setHex(0xffffff);   // the white tail spine
+      return mix(c, 0xf0b800, 0xf8d43a, (1 - vy)*0.25);
+    },
+    fins(T){
+      const yellow = c => c.setHex(0xefb400);
+      return [
+        {pts:[[-0.47,0.06],[-0.58,0.16],[-0.68,0.2],[-0.66,0],[-0.68,-0.2],[-0.58,-0.16],[-0.47,-0.06]], paint:yellow},
+        {pts:[[0.28,T(0.28)-0.03],[0.15,T(0.15)+0.1],[-0.15,T(-0.15)+0.12],[-0.4,T(-0.4)+0.1],[-0.46,T(-0.46)],[-0.1,T(-0.1)-0.03]], paint:yellow},
+        {pts:[[0.1,-(T(0.1)-0.03)],[0.0,-(T(0)+0.1)],[-0.35,-(T(-0.35)+0.1)],[-0.46,-T(-0.46)],[-0.15,-(T(-0.15)-0.03)]], paint:yellow}
+      ];
+    },
+    pec:{t:0.66, pts:[[0,0],[-0.04,0.08],[-0.13,0.1],[-0.15,0.05],[-0.07,0]], paint:c=>c.setHex(0xefb400)}
+  },
+  { // Angelfish: a silver sail, three black bars, very tall swept fins and long streamers.
+    name:'angelfish', n:2, len:0.3, speed:0.28, amp:0.07, beat:0.7, yLo:0.3, yHi:0.85, metal:0.25, rough:0.3, finOpacity:0.82,
+    shape:{H:0.36, Wd:0.06, peak:0.6, e:0.8, stalk:0.18},
+    eye:{t:0.86, vy:0.3, r:0.045, iris:0xb8382a},
+    paint(c, t, vy){
+      for(const [tc, bw] of [[0.84, 0.028], [0.56, 0.05], [0.27, 0.035]]) if(Math.abs(t - tc) < bw) return c.setHex(0x24252c);
+      return mix(c, 0xf3f0e6, 0xc7bea2, (vy + 1)*0.35);
+    },
+    fins(T){
+      const barred = (c, u) => [[0.06,0.05],[-0.23,0.035]].some(([uc,bw]) => Math.abs(u - uc) < bw)
+        ? c.setHex(0x24252c) : c.setHex(0xe6e2d4);
+      const dorsal = [[0.22,T(0.22)-0.03],[0.12,0.48],[-0.08,0.72],[-0.3,0.95],[-0.38,0.92],[-0.3,0.55],[-0.42,0.14],[-0.36,0.04],[-0.05,T(-0.05)-0.03]];
+      const streamer = [[0.2,-0.28],[0.16,-0.55],[0.04,-0.98],[0.1,-0.62],[0.24,-0.3]];
+      return [
+        {pts:[[-0.47,0.05],[-0.6,0.15],[-0.82,0.24],[-0.72,0.08],[-0.69,0],[-0.72,-0.08],[-0.82,-0.24],[-0.6,-0.15],[-0.47,-0.05]], paint:barred},
+        {pts:dorsal, paint:barred},
+        {pts:dorsal.map(([u,v]) => [u, -v]), paint:barred},
+        {pts:streamer, x:0.025, paint:barred},
+        {pts:streamer, x:-0.025, paint:barred}
+      ];
+    },
+    pec:{t:0.7, pts:[[0,0],[-0.04,0.06],[-0.12,0.08],[-0.13,0.03],[-0.06,0]], paint:c=>c.setHex(0xe6e2d4)}
+  },
+  { // Fancy goldfish: round and chubby, with a big flowing double tail.
+    name:'goldfish', n:2, len:0.28, speed:0.26, amp:0.12, beat:0.9, yLo:0.1, yHi:0.75, finOpacity:0.72,
+    shape:{H:0.28, Wd:0.22, peak:0.6, e:0.6, stalk:0.3},
+    eye:{t:0.86, vy:0.22, r:0.055, iris:BLACK},
+    paint(c, t, vy){
+      if(vy < -0.45) return mix(c, 0xf6b45a, 0xfff0d2, (-vy - 0.45)*2);
+      return mix(c, 0xe24e16, 0xf58a2a, (1 - vy)*0.5);
+    },
+    fins(T){
+      const flowing = (c, u, v) => mix(c, 0xf0721e, 0xffe2b8, Math.max(-u - 0.45, Math.abs(v) - T(u)) / 0.55);
+      const tail = [[-0.45,0.08],[-0.62,0.28],[-0.92,0.42],[-1.08,0.3],[-0.86,0.08],[-1.02,-0.08],[-1.08,-0.34],[-0.88,-0.38],[-0.62,-0.26],[-0.45,-0.08]];
+      const anal = [[-0.15,-(T(-0.15)-0.03)],[-0.25,-(T(-0.25)+0.14)],[-0.4,-(T(-0.4)+0.08)],[-0.38,-(T(-0.38)-0.02)]];
+      return [
+        {pts:tail, splay:0.45, paint:flowing},
+        {pts:tail, splay:-0.45, paint:flowing},
+        {pts:[[0.2,T(0.2)-0.03],[0.1,T(0.1)+0.16],[-0.12,T(-0.12)+0.18],[-0.32,T(-0.32)+0.06],[-0.1,T(-0.1)-0.03]], paint:flowing},
+        {pts:anal, x:0.05, paint:flowing},
+        {pts:anal, x:-0.05, paint:flowing}
+      ];
+    },
+    pec:{t:0.68, pts:[[0,0],[-0.05,0.1],[-0.15,0.13],[-0.17,0.05],[-0.08,0]], paint:c=>c.setHex(0xf4964a)}
+  },
+  { // Neon tetras: tiny, slender, an electric blue line over a red belly. They school.
+    name:'neon', n:12, len:0.15, speed:0.55, amp:0.16, beat:1.6, yLo:0.25, yHi:0.75, school:true, finOpacity:0.35,
+    shape:{H:0.13, Wd:0.075, peak:0.5, e:0.85, stalk:0.32},
+    eye:{t:0.86, vy:0.2, r:0.06, iris:0x9fb8c8},
+    paint(c, t, vy){
+      if(vy > 0.6) return c.setHex(0x86866a);
+      if(vy > -0.2) return mix(c, 0x0a8fff, 0x45d2ff, Math.sin(t*9)*0.5 + 0.5);
+      if(t < 0.55) return c.setHex(0xe12a37);
+      return c.setHex(0xe9eef0);
+    },
+    fins(T){
+      const clear = c => c.setHex(0xeef3f6);
+      return [
+        {pts:[[-0.47,0.04],[-0.58,0.1],[-0.68,0.16],[-0.62,0.04],[-0.6,0],[-0.62,-0.04],[-0.68,-0.16],[-0.58,-0.1],[-0.47,-0.04]], paint:clear},
+        {pts:[[0.02,T(0.02)-0.02],[-0.04,T(-0.04)+0.08],[-0.12,T(-0.12)+0.07],[-0.12,T(-0.12)-0.02]], paint:clear}
+      ];
+    }
+  },
+  { // Betta: a small blue-to-red body under enormous flowing fins. Likes the top.
+    name:'betta', n:1, len:0.22, speed:0.22, amp:0.10, beat:0.8, yLo:0.55, yHi:1.0, finOpacity:0.86,
+    shape:{H:0.17, Wd:0.09, peak:0.55, e:0.75, stalk:0.5},
+    eye:{t:0.86, vy:0.2, r:0.05, iris:BLACK},
+    paint(c, t){ return mix(c, 0x2a3cb8, 0xb3122e, (1 - t)*0.9 + Math.sin(t*40)*0.06); },
+    fins(T){
+      const silk = (c, u, v) => {
+        const k = (Math.hypot(u + 0.2, v) - 0.15) / 0.75;
+        return k > 0.92 ? c.setHex(0x5a0718) : mix(c, 0x3a3fc0, 0xc8102e, k*1.6);
+      };
+      return [
+        {pts:[[-0.46,0.07],[-0.6,0.38],[-0.95,0.55],[-1.18,0.22],[-1.2,-0.1],[-0.98,-0.5],[-0.62,-0.38],[-0.46,-0.07]], paint:silk},
+        {pts:[[0.05,T(0.05)-0.03],[-0.05,0.32],[-0.3,0.48],[-0.6,0.45],[-0.7,0.25],[-0.5,0.12],[-0.3,T(-0.3)-0.02]], paint:silk},
+        {pts:[[0.22,-(T(0.22)-0.03)],[0.05,-0.42],[-0.25,-0.62],[-0.62,-0.5],[-0.58,-0.18],[-0.4,-(T(-0.4)-0.02)]], paint:silk}
+      ];
+    },
+    pec:{t:0.7, pts:[[0,0],[-0.04,0.07],[-0.12,0.09],[-0.13,0.03],[-0.06,0]], paint:c=>c.setHex(0xd8324a)}
+  }
+];
+
+const eyeBallGeo = new THREE.SphereGeometry(1, 14, 10);
+const pupilMat = new THREE.MeshStandardMaterial({color:0x0c0d12, roughness:0.15});
+const glintMat = new THREE.MeshBasicMaterial({color:0xffffff});
+
+function makeFish(sp){
+  const L = sp.len * rand(0.9, 1.1);
+  const P = profile(sp.shape);
+  const U = {uPhase:{value:rand(0, 6.28)}, uAmp:{value:sp.amp}, uLen:{value:L}};
+  const g = new THREE.Group();
+
+  const bodyMat = addBend(new THREE.MeshStandardMaterial({
+    vertexColors:true, roughness:sp.rough ?? 0.38, metalness:sp.metal ?? 0.05
+  }), U);
+  g.add(new THREE.Mesh(bodyGeo(L, P, sp.paint), bodyMat));
+
+  const finMat = addBend(new THREE.MeshStandardMaterial({
+    vertexColors:true, roughness:0.5, side:THREE.DoubleSide,
+    transparent:true, opacity:sp.finOpacity ?? 0.9, depthWrite:false
+  }), U);
+  for(const fin of sp.fins(P.top)){
+    const map = fin.splay ? (u,v) => [fin.splay*Math.max(0, -u - 0.45)*L, v*L, u*L]
+              : fin.x     ? (u,v) => [fin.x*L, v*L, u*L]
+              :             (u,v) => [0, v*L, u*L];
+    const m = new THREE.Mesh(finGeo(fin.pts, map, fin.paint), finMat);
+    m.renderOrder = 1;
+    g.add(m);
+  }
+
+  // Pectoral fins sit just behind the gills and paddle on their own.
+  const pecs = [];
+  if(sp.pec){
+    const t = sp.pec.t, z = -L/2 + t*L, x = P.w(t)*L*0.85, y = P.h(t)*L*-0.25;
+    const pecMat = new THREE.MeshStandardMaterial({
+      vertexColors:true, roughness:0.5, side:THREE.DoubleSide,
+      transparent:true, opacity:Math.min(0.9, (sp.finOpacity ?? 0.9)), depthWrite:false
+    });
+    const geo = finGeo(sp.pec.pts, (u,v) => [v*L, -0.3*v*L, u*L], sp.pec.paint);
+    [-1, 1].forEach(side => {
+      const pv = new THREE.Group();
+      pv.position.set(side*x, y, z);
+      pv.scale.x = side;
+      pv.add(new THREE.Mesh(geo, pecMat));
+      g.add(pv);
+      pecs.push({pv, side});
+    });
+  }
+
+  // Eyes: a coloured ball, a black pupil, a tiny white glint.
+  const et = sp.eye.t, evy = sp.eye.vy, r = sp.eye.r*L;
+  const ex = P.w(et)*L*Math.sqrt(Math.max(0, 1 - evy*evy))*0.9, ey = P.h(et)*L*evy, ez = -L/2 + et*L;
+  const irisMat = new THREE.MeshStandardMaterial({color:sp.eye.iris, roughness:0.25});
+  [-1, 1].forEach(side => {
+    const ball = new THREE.Mesh(eyeBallGeo, irisMat);
+    ball.scale.setScalar(r);
+    ball.position.set(side*ex, ey, ez);
+    const pupil = new THREE.Mesh(eyeBallGeo, pupilMat);
+    pupil.scale.setScalar(r*0.6);
+    pupil.position.set(side*(ex + r*0.5), ey, ez + r*0.05);
+    const glint = new THREE.Mesh(eyeBallGeo, glintMat);
+    glint.scale.setScalar(r*0.17);
+    glint.position.set(side*(ex + r*0.95), ey + r*0.28, ez + r*0.2);
+    g.add(ball, pupil, glint);
+  });
+
+  const f = {
+    g, U, pecs, sp, L,
+    vel:new THREE.Vector3(rand(-1,1), rand(-0.2,0.2), rand(-1,1)).setLength(sp.speed*0.5),
+    goal:null, goalT:0, phase:U.uPhase.value, burst:0
+  };
+  g.position.copy(randomGoal(sp));
+  tank.add(g);
+  return f;
+}
+
+function randomGoal(sp){
+  if(sp.home === 'anemone' && Math.random() < 0.75){
+    return new THREE.Vector3(
+      ANEMONE.x + rand(-0.35, 0.35),
+      MU.clamp(ANEMONE.y + rand(0.2, 0.6), BOUND.yMin, BOUND.yMax),
+      MU.clamp(ANEMONE.z + rand(-0.3, 0.3), -BOUND.z, BOUND.z)
+    );
+  }
+  const yr = BOUND.yMax - BOUND.yMin;
+  return new THREE.Vector3(rand(-BOUND.x, BOUND.x), BOUND.yMin + yr*rand(sp.yLo, sp.yHi), rand(-BOUND.z, BOUND.z));
+}
+
+const fish = [];
+SPECIES.forEach(sp => { for(let i=0;i<sp.n;i++) fish.push(makeFish(sp)); });
+
+/* ============================================================
+   10 · Food: tap the water, flakes drift down, fish come to eat
+   ============================================================ */
+const flakeGeo = new THREE.BoxGeometry(0.035, 0.008, 0.028);
+const flakeMats = [0xf0a04b, 0xd98fa8, 0xe0563a].map(c=>new THREE.MeshStandardMaterial({color:c, roughness:0.7}));
+const flakes = [];
+let eaten = 0;
+const fedEl = document.getElementById('fed');
+
+function dropFood(x, z){
+  const n = 7;
+  for(let i=0;i<n;i++){
+    if(flakes.length > 70){ const old = flakes.shift(); tank.remove(old.m); }
+    const m = new THREE.Mesh(flakeGeo, pick(flakeMats));
+    m.position.set(MU.clamp(x + rand(-0.18,0.18), -BOUND.x, BOUND.x), WATER - 0.01, MU.clamp(z + rand(-0.14,0.14), -BOUND.z, BOUND.z));
+    m.rotation.set(rand(0,3), rand(0,3), rand(0,3));
+    tank.add(m);
+    flakes.push({m, v:rand(0.08,0.14), spin:rand(-2,2), ph:rand(0,6.28), floatT:rand(0.4,1.4), age:0, landed:false});
+  }
+}
+
+// Tap = a pointer that barely moved. A drag is the camera's.
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+const hitBox = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshBasicMaterial({visible:false}));
+hitBox.position.y = H/2;
+tank.add(hitBox);
+let down = null;
+canvas.addEventListener('pointerdown', e=>{ down = {x:e.clientX, y:e.clientY, t:performance.now()}; });
+canvas.addEventListener('pointerup', e=>{
+  if(!down) return;
+  const moved = Math.hypot(e.clientX-down.x, e.clientY-down.y), dt = performance.now()-down.t;
+  down = null;
+  if(moved > 8 || dt > 500) return;
+  const r = canvas.getBoundingClientRect();
+  ndc.set((e.clientX-r.left)/r.width*2-1, -((e.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(ndc, camera);
+  const hit = ray.intersectObject(hitBox, false)[0];
+  if(!hit) return;
+  // Wherever the tap lands on the glass, sprinkle from the surface above it,
+  // nudged a little into the tank so it isn't against the front pane.
+  const p = tank.worldToLocal(hit.point.clone());
+  dropFood(p.x, Math.min(p.z, D/2 - 0.45));
+  hideHint();
+});
+
+/* ============================================================
+   11 · Animation
+   ============================================================ */
+const hint = document.getElementById('hint');
+let hintGone = false;
+function hideHint(){ if(!hintGone){ hintGone = true; hint.classList.add('gone'); } }
+controls.addEventListener('start', ()=>setTimeout(hideHint, 2500));
+
+const tmp = new THREE.Vector3(), steer = new THREE.Vector3(), aim = new THREE.Object3D();
+const clock = new THREE.Clock();
+let t = 0, idle = 0;
+controls.addEventListener('start', ()=>{ idle = 0; });
+
+function updateFish(f, dt){
+  const sp = f.sp;
+  let target = null, chasing = false;
+
+  // Hungry fish head for the nearest flake they can "see".
+  let best = 2.6, bestFlake = null;
+  for(const fl of flakes){
+    const d = fl.m.position.distanceTo(f.g.position);
+    if(d < best){ best = d; bestFlake = fl; }
+  }
+  if(bestFlake){
+    target = bestFlake.m.position; chasing = true;
+    if(best < Math.max(0.07, f.L*0.35)){
+      tank.remove(bestFlake.m);
+      flakes.splice(flakes.indexOf(bestFlake), 1);
+      f.burst = 1;
+      eaten++;
+      fedEl.textContent = eaten === 1 ? 'one happy fish' : eaten + ' happy bites';
+      fedEl.classList.add('on');
+    }
+  }
+  if(!target){
+    f.goalT -= dt;
+    if(!f.goal || f.goalT <= 0 || f.goal.distanceTo(f.g.position) < (sp.home ? 0.12 : 0.3)){
+      f.goal = randomGoal(sp); f.goalT = rand(4, 9);
+    }
+    target = f.goal;
+  }
+
+  const maxSpeed = sp.speed * (chasing ? 1.7 : 1) * (1 + f.burst*0.6) * PACE;
+  steer.copy(target).sub(f.g.position).setLength(maxSpeed).sub(f.vel);
+
+  // Keep a polite distance; the little neons also drift together as a school.
+  const cohere = new THREE.Vector3(), align = new THREE.Vector3(); let nCo = 0;
+  for(const o of fish){
+    if(o === f) continue;
+    const d = o.g.position.distanceTo(f.g.position);
+    const room = (f.L + o.L) * 0.75;
+    if(d < room && d > 1e-4){
+      tmp.copy(f.g.position).sub(o.g.position).multiplyScalar((room - d)/d * 3.5);
+      steer.add(tmp);
+    }
+    if(sp.school && o.sp === sp && d < 0.9){ cohere.add(o.g.position); align.add(o.vel); nCo++; }
+  }
+  if(nCo && !chasing){
+    cohere.divideScalar(nCo).sub(f.g.position).multiplyScalar(0.8);
+    steer.add(cohere);
+    steer.add(align.divideScalar(nCo).sub(f.vel).multiplyScalar(0.9));
+  }
+
+  // Soft walls.
+  const p = f.g.position;
+  const push = (v, lo, hi) => v < lo ? (lo - v) * 6 : v > hi ? (hi - v) * 6 : 0;
+  steer.x += push(p.x, -BOUND.x, BOUND.x);
+  steer.y += push(p.y, BOUND.yMin, BOUND.yMax);
+  steer.z += push(p.z, -BOUND.z, BOUND.z);
+
+  steer.clampLength(0, 1.4 * PACE);
+  f.vel.addScaledVector(steer, dt);
+  // Fish swim mostly level.
+  const horiz = Math.hypot(f.vel.x, f.vel.z);
+  f.vel.y = MU.clamp(f.vel.y, -horiz*0.6, horiz*0.6);
+  f.vel.clampLength(0.04, maxSpeed);
+  p.addScaledVector(f.vel, dt);
+  p.x = MU.clamp(p.x, -W/2+0.12, W/2-0.12);
+  p.y = MU.clamp(p.y, 0.2, WATER-0.08);
+  p.z = MU.clamp(p.z, -D/2+0.12, D/2-0.12);
+
+  aim.position.copy(p);
+  aim.lookAt(tmp.copy(p).add(f.vel));
+  f.g.quaternion.slerp(aim.quaternion, Math.min(1, dt*3.5));
+
+  const speed01 = f.vel.length() / Math.max(0.01, sp.speed);
+  f.phase += dt * (4 + speed01*8) * (sp.beat || 1) * PACE;
+  f.U.uPhase.value = f.phase;
+  f.U.uAmp.value = sp.amp * (0.75 + Math.min(speed01, 1.6)*0.45);
+  for(const pc of f.pecs) pc.pv.rotation.y = pc.side * (0.35 + Math.sin(f.phase*0.7 + pc.side)*0.35);
+  f.burst = Math.max(0, f.burst - dt*1.2);
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 1/20);
+  t += dt;
+  idle += dt;
+
+  // Water surface ripples.
+  const sp = surfGeo.attributes.position, sa = sp.array;
+  for(let i=0;i<sp.count;i++){
+    const x = surfBase[i*3], z = surfBase[i*3+2];
+    sa[i*3+1] = Math.sin(x*3.1 + t*1.6*PACE)*0.012 + Math.cos(z*4.3 - t*1.2*PACE)*0.01;
+  }
+  sp.needsUpdate = true;
+  surfGeo.computeVertexNormals();
+
+  // Light dancing on the sand.
+  caustTex[0].offset.set(t*0.018*PACE, t*0.011*PACE);
+  caustTex[1].offset.set(-t*0.013*PACE, t*0.016*PACE);
+  caustics[0].material.opacity = 0.12 + Math.sin(t*0.9)*0.03;
+  glow.intensity = 0.55 + Math.sin(t*1.3)*0.08;
+
+  // Seaweed sways more the higher up the blade.
+  for(const w of weeds){
+    const a = w.m.geometry.attributes.position, arr = a.array, b = w.base;
+    for(let i=0;i<a.count;i++){
+      const y = b[i*3+1], k = Math.pow(Math.max(0, y) / w.h, 1.6);
+      arr[i*3]   = b[i*3]   + Math.sin(t*1.1*PACE + w.phase + y*2.2) * w.amp * k;
+      arr[i*3+2] = b[i*3+2] + Math.cos(t*0.8*PACE + w.phase + y*1.7) * w.amp * 0.6 * k;
+    }
+    a.needsUpdate = true;
+  }
+
+  // Bubbles rise, wobble, and pop at the surface.
+  for(let i=0;i<BUBBLES;i++){
+    const b = bubbles[i], s = sources[b.src];
+    b.y += b.v * dt * PACE * (1 + b.r*8);
+    if(b.y > WATER){ b.y = s.y; b.r = rand(0.012,0.035); b.dx = rand(-0.05,0.05); b.dz = rand(-0.05,0.05); }
+    const rise = b.y - s.y;
+    dummy.position.set(
+      s.x + b.dx + Math.sin(t*3 + b.ph + rise*4)*0.03*Math.min(1, rise),
+      b.y,
+      s.z + b.dz + Math.cos(t*2.6 + b.ph)*0.02*Math.min(1, rise)
+    );
+    dummy.scale.setScalar(b.r * (1 + rise*0.15));
+    dummy.updateMatrix();
+    bubbleMesh.setMatrixAt(i, dummy.matrix);
+  }
+  bubbleMesh.instanceMatrix.needsUpdate = true;
+
+  // Flakes float a moment, then flutter down to the sand and slowly vanish.
+  for(let i=flakes.length-1;i>=0;i--){
+    const f = flakes[i], m = f.m;
+    f.age += dt;
+    if(f.landed){
+      if(f.age > 14){ tank.remove(m); flakes.splice(i,1); }
+      continue;
+    }
+    if(f.age > f.floatT){
+      m.position.y -= f.v * dt * PACE;
+      m.position.x += Math.sin(t*2 + f.ph) * 0.04 * dt;
+      m.rotation.x += f.spin * dt; m.rotation.z += f.spin * 0.7 * dt;
+    }
+    const floor = sandY(m.position.x, m.position.z) + 0.01;
+    if(m.position.y <= floor){ m.position.y = floor; f.landed = true; f.age = 0; }
+  }
+
+  // The anemone leans outward and sways with the current.
+  for(const m of tentacles){
+    const u = m.userData, sway = Math.sin(t*1.1*PACE + u.ph)*0.14;
+    m.rotation.x = Math.sin(u.a)*u.lean + sway;
+    m.rotation.z = -Math.cos(u.a)*u.lean + Math.cos(t*0.9*PACE + u.ph)*0.1;
+  }
+
+  for(const f of fish) updateFish(f, dt);
+
+  // Left alone, the view drifts slowly side to side.
+  if(idle > 8 && !CALM){
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = Math.sin(t*0.12) * 0.6;
+  }else controls.autoRotate = false;
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+animate();
+requestAnimationFrame(()=>ov.classList.add('gone'));
+setTimeout(hideHint, 12000);
+})();
+</script>
+</body>
+</html>
