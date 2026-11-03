@@ -350,11 +350,15 @@ const GOLDEN = Math.PI * (3 - Math.sqrt(5));   // 2.39996…
 const FLOWERS = [
   {id:'rose',        name:'Rose',          color:'#c2455f', scale:1.00, filler:false},
   {id:'peony',       name:'Peony',         color:'#f0aebd', scale:1.16, filler:false},
-  {id:'tulip',       name:'Tulip',         color:'#e0563a', scale:1.02, filler:false},
+  // Christmas: poinsettias stand in for the tulip and the sunflower. Swap these two
+  // lines back to bring them home; their builders are still below.
+  //   {id:'tulip',     name:'Tulip',     color:'#e0563a', scale:1.02, filler:false},
+  //   {id:'sunflower', name:'Sunflower', color:'#f0bf3f', scale:1.20, filler:false},
+  {id:'poinsettia',  name:'Poinsettia',    color:'#b5172b', scale:1.10, filler:false},
   {id:'ranunculus',  name:'Ranunculus',    color:'#f0a04b', scale:0.92, filler:false},
   {id:'anemone',     name:'Anemone',       color:'#f6f1e7', scale:1.00, filler:false},
   {id:'daisy',       name:'Daisy',         color:'#fdfbf4', scale:0.84, filler:false},
-  {id:'sunflower',   name:'Sunflower',     color:'#f0bf3f', scale:1.20, filler:false},
+  {id:'whitepoinsettia', name:'White Poinsettia', color:'#f2ead6', scale:1.10, filler:false},
   {id:'wildflower',  name:'Wildflower',    color:'#9b6cd4', scale:1.00, filler:true },
   {id:'babysbreath', name:"Baby's Breath", color:'#fbf8f0', scale:1.05, filler:true },
   {id:'eucalyptus',  name:'Eucalyptus',    color:'#8fae94', scale:1.10, filler:true }
@@ -541,9 +545,45 @@ const coreMat = new THREE.MeshPhysicalMaterial({
   roughness: 0.78, metalness: 0.0, clearcoat: 0.2, envMapIntensity: 0.85
 });
 const stemMat = new THREE.MeshPhysicalMaterial({
-  color: 0x7fa382, roughness: 0.62, metalness: 0.0,   // sage-leaning green
+  color: 0x7fa382, vertexColors: true, roughness: 0.62, metalness: 0.0,   // sage-leaning green
   clearcoat: 0.3, clearcoatRoughness: 0.5, transparent: true, opacity: 0
 });
+// Foliage that is part of a head (calyx, sepals, bracts) scales in with it; leaves
+// along the stems fade in with the stems, so they get their own transparent twin.
+function foliageMat(fade){
+  return new THREE.MeshPhysicalMaterial({
+    color: 0xffffff, vertexColors: true, side: THREE.DoubleSide,
+    roughness: 0.55, metalness: 0.0, clearcoat: 0.25, clearcoatRoughness: 0.5,
+    sheen: 0.4, sheenColor: new THREE.Color(0xe9f5df), sheenRoughness: 0.8,
+    transparent: !!fade, opacity: fade ? 0 : 1
+  });
+}
+const sepalMat = foliageMat(false);
+const leafMat  = foliageMat(true);
+
+// Stems and stem leaves sway in the vertex shader. Each vertex carries
+// aSway = (phase, speed, weight): the same phase/speed as its head, and a weight
+// that is 0 at the vase mouth and 1 at the head, so the stem bends with the
+// flower instead of the head wobbling on a rigid pole. The offset formula must
+// match the head wobble in animate().
+const SWAY_X = 0.012, SWAY_Y = 0.006;
+const swayT = {value: 0}, swayOn = {value: 1};
+function addSway(mat){
+  mat.onBeforeCompile = (sh)=>{
+    sh.uniforms.uSwayT = swayT;
+    sh.uniforms.uSwayOn = swayOn;
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>',
+        '#include <common>\nattribute vec3 aSway;\nuniform float uSwayT;\nuniform float uSwayOn;')
+      .replace('#include <begin_vertex>',
+        '#include <begin_vertex>\n' +
+        '{ float sw_s = uSwayT * aSway.y + aSway.x;\n' +
+        '  transformed += uSwayOn * aSway.z * vec3(sin(sw_s*0.9) * ' + SWAY_X.toFixed(4) + ',\n' +
+        '    sin(sw_s*0.7 + 1.3) * ' + SWAY_Y.toFixed(4) + ', cos(sw_s*0.8) * ' + SWAY_X.toFixed(4) + '); }');
+  };
+}
+addSway(stemMat);
+addSway(leafMat);
 
 /* ============================================================
    6 · Vase, ground
@@ -653,6 +693,95 @@ function tint(geo, color, jitter, gradient){
   return geo;
 }
 
+// petal tint: tint() plus the colour variation a real petal has — a slight hue drift
+// per petal, a deeper and richer base, a lighter tip, a soft pale edge and a faint
+// midrib. All in vertex colours, so it costs nothing at runtime and still recolours.
+const _hsl = {h:0, s:0, l:0}, _pc = new THREE.Color();
+function tintP(geo, color, jitter, gradient){
+  const n = geo.attributes.position.count;
+  const uv = geo.attributes.uv;
+  const arr = new Float32Array(n*3);
+  const j  = 1 + (Math.random()-0.5) * (jitter === undefined ? 0.16 : jitter);
+  const gr = gradient === undefined ? 0.3 : gradient;
+  const hd = (Math.random()-0.5) * 0.045;          // per-petal hue drift
+  color.getHSL(_hsl);
+  for(let i=0;i<n;i++){
+    const u = uv ? uv.getX(i) : 0.5, v = uv ? uv.getY(i) : 1;
+    const edge = Math.abs(u*2 - 1);
+    const rib  = 1 - edge;
+    const h = _hsl.h + hd + (v - 0.5) * 0.012;
+    const s = Math.min(1, _hsl.s * (1 + 0.20*(1-v) - 0.10*v*v));
+    let l = _hsl.l + (1 - _hsl.l) * 0.10 * v*v * v    // lighter tip
+          + 0.04 * edge*edge * v                      // pale edge
+          - 0.03 * rib*rib * (1 - v);                 // faint midrib near the base
+    l = Math.min(0.98, Math.max(0, l));
+    _pc.setHSL((h + 1) % 1, s, l);
+    const k = ((1 - gr) + gr * v) * j;
+    arr[i*3]   = _pc.r * k;
+    arr[i*3+1] = _pc.g * k;
+    arr[i*3+2] = _pc.b * k;
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(arr, 3));
+  return geo;
+}
+
+// Green parts. Receptacle + sepals under a head (head-local space, y up),
+// and single leaves hung along a stem.
+const LEAF_GREEN = new THREE.Color('#4e7a4b');
+const SEPAL_GREEN = new THREE.Color('#5f8a55');
+function calyx(o){
+  const out = [];
+  if(o.hip) out.push(tint(ball(o.hip, 1, 0.8, 1, 0, -0.012, 0), SEPAL_GREEN, 0.12, 0.3));
+  for(let i=0;i<o.n;i++){
+    const g = makePetal({w: o.w, h: o.len, cup: 0.5, curl: o.curl === undefined ? -0.3 : o.curl,
+      ripple: 0.004, shape: 0.9, round: 0.85, sw: 3, sh: 5});
+    place(g, {radius: o.r || 0.02, angle: i*(2*Math.PI/o.n) + (Math.random()-0.5)*0.25,
+      tilt: o.tilt + (Math.random()-0.5)*0.35, y: o.y === undefined ? -0.006 : o.y});
+    out.push(tint(g, SEPAL_GREEN, 0.2, 0.35));
+  }
+  return out;
+}
+
+// leaf templates per type, three jitter variants each; a leaf is a cloned template
+// laid along the stem, drooping away from it
+const STEM_LEAVES = {
+  rose:       {n:3, w:0.15, h:0.26, curl:0.55},
+  peony:      {n:3, w:0.17, h:0.30, curl:0.50},
+  ranunculus: {n:2, w:0.13, h:0.22, curl:0.50},
+  sunflower:  {n:3, w:0.21, h:0.34, curl:0.60},
+  tulip:      {n:2, w:0.11, h:0.55, curl:0.70, strap:true},
+  anemone:    {n:2, w:0.10, h:0.18, curl:0.45},
+  daisy:      {n:2, w:0.07, h:0.17, curl:0.40},
+  poinsettia:      {n:2, w:0.15, h:0.27, curl:0.50},
+  whitepoinsettia: {n:2, w:0.15, h:0.27, curl:0.50}
+};
+function leafTemplates(spec){
+  const t = [];
+  for(let v=0;v<3;v++){
+    const g = makePetal({w: spec.w*(0.9+Math.random()*0.2), h: spec.h*(0.9+Math.random()*0.2),
+      cup: spec.strap ? 0.9 : 0.35, curl: spec.curl, ripple: 0.01, waves: 3,
+      shape: spec.strap ? 1.0 : 0.82, round: spec.strap ? 0.55 : 0.9, sw: 4, sh: 8});
+    t.push(tint(g, LEAF_GREEN, 0.22, 0.3));
+  }
+  return t;
+}
+const _lb = new THREE.Matrix4(), _lx = new THREE.Vector3(), _ly = new THREE.Vector3(),
+      _lz = new THREE.Vector3(), _ls = new THREE.Vector3(), _DOWN = new THREE.Vector3(0,-1,0);
+// lay a clone of `tpl` at `at`, rising from the stem (tangent `tan`) at azimuth `az`
+function layLeaf(tpl, at, tan, az, elev, scale){
+  _ls.set(Math.cos(az), 0, Math.sin(az));
+  _ls.addScaledVector(tan, -_ls.dot(tan)).normalize();
+  _ly.copy(tan).multiplyScalar(Math.cos(elev)).addScaledVector(_ls, Math.sin(elev)).normalize();
+  _lz.copy(_DOWN).addScaledVector(_ly, -_DOWN.dot(_ly)).normalize();   // curl bends it down
+  _lx.crossVectors(_ly, _lz);
+  _lb.makeBasis(_lx, _ly, _lz);
+  const g = tpl.clone();
+  g.scale(scale, scale, scale);
+  g.applyMatrix4(_lb);
+  g.translate(at.x, at.y, at.z);
+  return g;
+}
+
 function ball(r, sx, sy, sz, x, y, z){
   const g = new THREE.SphereGeometry(r, 10, 8);
   g.scale(sx, sy, sz);
@@ -695,9 +824,9 @@ function fRose(c, d){
       tilt: MU.lerp(0.10, 1.30, Math.pow(t, 0.85)),
       y: MU.lerp(0.15, 0.0, Math.pow(t, 0.6))
     });
-    petals.push(tint(g, c, 0.14, 0.34));
+    petals.push(tintP(g, c, 0.14, 0.34));
   }
-  return {petals, cores: []};
+  return {petals, cores: [], leaves: calyx({n:5, hip:0.045, len:0.20, w:0.07, tilt:1.95})};
 }
 
 function fPeony(c, d){
@@ -717,9 +846,9 @@ function fPeony(c, d){
       y: MU.lerp(0.16, -0.01, Math.pow(t, 0.55)),
       spin: (Math.random()-0.5)*0.3
     });
-    petals.push(tint(g, c, 0.18, 0.4));
+    petals.push(tintP(g, c, 0.18, 0.4));
   }
-  return {petals, cores: []};
+  return {petals, cores: [], leaves: calyx({n:5, hip:0.05, len:0.18, w:0.08, tilt:1.85})};
 }
 
 function fTulip(c, d){
@@ -735,7 +864,7 @@ function fTulip(c, d){
         ripple: 0.02, shape: 1.45, round: 0.62, sh: 11
       });
       place(g, {radius: ring.r, angle: ring.off + i*(2*Math.PI/ring.n), tilt: ring.tilt, y: 0.015});
-      petals.push(tint(g, c, 0.12 + ri*0.04, 0.42));
+      petals.push(tintP(g, c, 0.12 + ri*0.04, 0.42));
     }
   });
   const cores = [tint(ball(0.028, 1, 1.6, 1, 0, 0.10, 0), POLLEN, 0.1, 0.2)];
@@ -757,9 +886,9 @@ function fRanunculus(c, d){
       tilt: MU.lerp(0.12, 1.48, Math.pow(t, 0.7)),
       y: MU.lerp(0.11, 0.0, Math.pow(t, 0.5))
     });
-    petals.push(tint(g, c, 0.2, 0.32));
+    petals.push(tintP(g, c, 0.2, 0.32));
   }
-  return {petals, cores: []};
+  return {petals, cores: [], leaves: calyx({n:5, hip:0.035, len:0.13, w:0.06, tilt:1.8})};
 }
 
 function fAnemone(c, d){
@@ -771,7 +900,7 @@ function fAnemone(c, d){
       shape: 1.7, round: 0.5
     });
     place(g, {radius: 0.045, angle: i*(2*Math.PI/n) + Math.random()*0.1, tilt: 1.16, y: 0.012});
-    petals.push(tint(g, c, 0.13, 0.3));
+    petals.push(tintP(g, c, 0.13, 0.3));
   }
   const cores = [tint(ball(0.072, 1, 0.62, 1, 0, 0.028, 0), DARK_EYE, 0.08, 0.15)];
   const st = Math.round(MU.lerp(10, 18, d));
@@ -792,10 +921,10 @@ function fDaisy(c, d){
     });
     place(g, {radius: 0.048, angle: i*(2*Math.PI/n) + (Math.random()-0.5)*0.08,
       tilt: 1.30 + (Math.random()-0.5)*0.12, y: 0.008});
-    petals.push(tint(g, c, 0.1, 0.28));
+    petals.push(tintP(g, c, 0.1, 0.28));
   }
   const cores = [tint(ball(0.055, 1, 0.6, 1, 0, 0.022, 0), DAISY_EYE, 0.08, 0.2)];
-  return {petals, cores};
+  return {petals, cores, leaves: calyx({n:7, hip:0.03, len:0.09, w:0.035, tilt:1.7, r:0.03})};
 }
 
 function fSunflower(c, d){
@@ -810,7 +939,7 @@ function fSunflower(c, d){
       });
       place(g, {radius: ring.r, angle: i*(2*Math.PI/ring.n) + ri*0.28,
         tilt: ring.tilt + (Math.random()-0.5)*0.14, y: 0.01 + ri*0.006});
-      petals.push(tint(g, c, 0.14, 0.3));
+      petals.push(tintP(g, c, 0.14, 0.3));
     }
   });
   const cores = [tint(ball(0.155, 1, 0.30, 1, 0, 0.018, 0), SUN_EYE, 0.06, 0.25)];
@@ -820,7 +949,42 @@ function fSunflower(c, d){
     cores.push(tint(ball(0.013, 1, 0.7, 1, Math.cos(a)*r, 0.036 - r*0.06, Math.sin(a)*r),
       DARK_EYE, 0.35, 0.1));
   }
-  return {petals, cores};
+  // green bracts under the disc
+  return {petals, cores, leaves: calyx({n:16, hip:0.07, len:0.14, w:0.07, tilt:1.65, r:0.07, curl:0.2})};
+}
+
+// A poinsettia's "petals" are bracts: long, pointed, nearly flat leaves in a
+// star, the inner tiers smaller and more upright, around a knot of tiny
+// yellow-green cyathia. Plain green leaves sit underneath.
+const CYATHIA    = new THREE.Color('#c9b437');
+const CYATHIA_LIP = new THREE.Color('#a2301f');
+function fPoinsettia(c, d){
+  const petals = [];
+  const tiers = [{n:Math.round(MU.lerp(6, 8, d)), w:0.15, h:0.36, tilt:1.40, r:0.03, off:0},
+                 {n:Math.round(MU.lerp(5, 7, d)), w:0.12, h:0.27, tilt:1.12, r:0.025, off:0.45},
+                 {n:Math.round(MU.lerp(3, 5, d)), w:0.08, h:0.16, tilt:0.80, r:0.02, off:0.9}];
+  tiers.forEach((tier, ti)=>{
+    for(let i=0;i<tier.n;i++){
+      const g = makePetal({
+        w: tier.w * (0.9 + Math.random()*0.2), h: tier.h * (0.88 + Math.random()*0.24),
+        cup: 0.35, curl: 0.12 + Math.random()*0.1, ripple: 0.012, waves: 2,
+        shape: 0.75, round: 1.1, sw: 4, sh: 9
+      });
+      place(g, {radius: tier.r, angle: tier.off + i*(2*Math.PI/tier.n) + (Math.random()-0.5)*0.22,
+        tilt: tier.tilt + (Math.random()-0.5)*0.16, y: 0.01 + ti*0.012,
+        spin: (Math.random()-0.5)*0.25});
+      petals.push(tintP(g, c, 0.12, 0.28));
+    }
+  });
+  const cores = [];
+  const buds = Math.round(MU.lerp(6, 11, d));
+  for(let i=0;i<buds;i++){
+    const t = (i+0.5)/buds, a = i*GOLDEN, r = 0.032*Math.sqrt(t);
+    const x = Math.cos(a)*r, z = Math.sin(a)*r, y = 0.05 - r*0.3;
+    cores.push(tint(ball(0.011, 1, 1.15, 1, x, y, z), CYATHIA, 0.25, 0.2));
+    cores.push(tint(ball(0.005, 1, 0.6, 1, x, y + 0.011, z), CYATHIA_LIP, 0.2, 0.1));
+  }
+  return {petals, cores, leaves: calyx({n:5, len:0.30, w:0.15, tilt:1.62, r:0.03, curl:0.25})};
 }
 
 function fWildflower(c, d){
@@ -838,7 +1002,7 @@ function fWildflower(c, d){
         shape:1.8, round:0.45, sw:3, sh:4});
       place(g, {radius:0.016, angle:i*(2*Math.PI/pn), tilt:1.15, y:0});
       g.translate(tip.x, tip.y, tip.z);
-      petals.push(tint(g, c, 0.22, 0.3));
+      petals.push(tintP(g, c, 0.22, 0.3));
     }
     cores.push(tint(ball(0.012, 1, 0.8, 1, tip.x, tip.y + 0.006, tip.z), POLLEN, 0.15, 0.15));
   }
@@ -899,7 +1063,7 @@ function fEucalyptus(c, d){
     });
     place(g, {radius: 0.024, angle: i*2.3, tilt: 1.42 + Math.sin(i)*0.14, y: 0});
     g.translate(at.x, at.y, at.z);
-    petals.push(tint(g, c, 0.18, 0.35));
+    petals.push(tintP(g, c, 0.18, 0.35));
   }
   return {petals, cores};
 }
@@ -907,6 +1071,7 @@ function fEucalyptus(c, d){
 const BUILDERS = {
   rose:fRose, peony:fPeony, tulip:fTulip, ranunculus:fRanunculus, anemone:fAnemone,
   daisy:fDaisy, sunflower:fSunflower, wildflower:fWildflower,
+  poinsettia:fPoinsettia, whitepoinsettia:fPoinsettia,
   babysbreath:fBabysBreath, eucalyptus:fEucalyptus
 };
 
@@ -945,6 +1110,72 @@ function shuffleBiased(items){
     .map(o=>o.f);
 }
 
+const HEAD_VARIANTS = 3;
+
+// How far along its bend a point of the stem is: 0 at the vase mouth, 1 at the head.
+// Squared, so the stem stays put in the vase and moves most near the flower.
+function swayWeight(y, headY){
+  const y0 = VASE_H - 0.06;
+  const w = MU.clamp((y - y0) / Math.max(headY - y0, 0.001), 0, 1);
+  return w * w;
+}
+// tag every vertex of geo with the head's sway phase/speed and a weight (number or fn(vertexIndex))
+function setSway(geo, bloom, weight){
+  const n = geo.attributes.position.count;
+  const a = new Float32Array(n*3);
+  for(let i=0;i<n;i++){
+    a[i*3] = bloom.phase; a[i*3+1] = bloom.speed;
+    a[i*3+2] = typeof weight === 'function' ? weight(i) : weight;
+  }
+  geo.setAttribute('aSway', new THREE.BufferAttribute(a, 3));
+}
+
+// A smooth tapered stem swept along `curve` from just inside the vase mouth to the head:
+// 6 sides, a gentle flare under the flower, a little green variation per stem.
+const STEM_RINGS = 16, STEM_SIDES = 6, STEM_T0 = 0.27;
+const _sT = new THREE.Vector3(), _sS = new THREE.Vector3(), _sU = new THREE.Vector3(),
+      _sN = new THREE.Vector3(), _sP = new THREE.Vector3();
+function stemTube(curve, bloom){
+  const R = STEM_RINGS, S = STEM_SIDES;
+  const pos = new Float32Array(R*S*3), nor = new Float32Array(R*S*3), col = new Float32Array(R*S*3);
+  const ws = new Float32Array(R);
+  const headY = curve.getPoint(1).y;
+  const shade = 0.9 + Math.random() * 0.16;
+  for(let r=0;r<R;r++){
+    const kt = r/(R-1);
+    const u = MU.lerp(STEM_T0, 1, kt);
+    curve.getPoint(u, _sP);
+    curve.getTangent(u, _sT);
+    const ax = Math.abs(_sT.x), ay = Math.abs(_sT.y), az = Math.abs(_sT.z);
+    if(ax <= ay && ax <= az) _sS.set(1,0,0); else if(ay <= az) _sS.set(0,1,0); else _sS.set(0,0,1);
+    _sS.crossVectors(_sT, _sS).normalize();
+    _sU.crossVectors(_sT, _sS);
+    const flare = MU.smoothstep(kt, 0.9, 1.0);
+    const rad = (0.0155 - kt*0.0066) * (1 + 0.45*flare);
+    ws[r] = swayWeight(_sP.y, headY);
+    const k = shade * (0.92 + 0.08*kt);
+    for(let s=0;s<S;s++){
+      const a = s/S * Math.PI * 2, i = (r*S + s) * 3;
+      _sN.copy(_sS).multiplyScalar(Math.cos(a)).addScaledVector(_sU, Math.sin(a));
+      pos[i]   = _sP.x + _sN.x*rad; pos[i+1] = _sP.y + _sN.y*rad; pos[i+2] = _sP.z + _sN.z*rad;
+      nor[i] = _sN.x; nor[i+1] = _sN.y; nor[i+2] = _sN.z;
+      col[i] = col[i+1] = col[i+2] = k;
+    }
+  }
+  const idx = [];
+  for(let r=0;r<R-1;r++) for(let s=0;s<S;s++){
+    const a = r*S + s, b = r*S + (s+1)%S, c = (r+1)*S + s, d = (r+1)*S + (s+1)%S;
+    idx.push(a, b, c,  b, d, c);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('normal',   new THREE.BufferAttribute(nor, 3));
+  g.setAttribute('color',    new THREE.BufferAttribute(col, 3));
+  g.setIndex(idx);
+  setSway(g, bloom, i => ws[Math.floor(i / S)]);
+  return g;
+}
+
 function rebuild(){
   clearBouquet();
 
@@ -968,7 +1199,8 @@ function rebuild(){
   const squash = 0.78;
 
   const cache = new Map();
-  const stemGeoms = [];
+  const stemGeoms = [], leafGeoms = [];
+  let leafTpl = {};
   const center = new THREE.Vector3(0, centerY, 0);
   const dir = new THREE.Vector3(), aim = new THREE.Vector3(), pos = new THREE.Vector3();
 
@@ -992,14 +1224,19 @@ function rebuild(){
     quat.multiply(new THREE.Quaternion().setFromAxisAngle(UP, Math.random()*Math.PI*2));
 
     // --- head ---
-    const key = f.id + '|' + state.colors[f.id] + '|' + Math.round(dens*4);
+    // a few distinct heads per type (each builder rolls its own petal counts, jitter
+    // and spin), so a bunch of roses is not one rose copied twelve times
+    const variant = Math.floor(Math.random() * HEAD_VARIANTS);
+    const key = f.id + '|' + state.colors[f.id] + '|' + Math.round(dens*4) + '|' + variant;
     let entry = cache.get(key);
     if(!entry){
       const col = new THREE.Color(state.colors[f.id]);
       const parts = BUILDERS[f.id](col, dens);
-      entry = {petal: mergeAll(parts.petals), core: mergeAll(parts.cores)};
+      entry = {petal: mergeAll(parts.petals), core: mergeAll(parts.cores),
+               leaf: mergeAll(parts.leaves || [])};
       if(entry.petal) ownedGeoms.push(entry.petal);
       if(entry.core)  ownedGeoms.push(entry.core);
+      if(entry.leaf)  ownedGeoms.push(entry.leaf);
       cache.set(key, entry);
     }
     const head = new THREE.Group();
@@ -1011,30 +1248,47 @@ function rebuild(){
       const m = new THREE.Mesh(entry.core, coreMat);
       m.castShadow = true; m.receiveShadow = true; head.add(m);
     }
+    if(entry.leaf){
+      const m = new THREE.Mesh(entry.leaf, sepalMat);
+      m.castShadow = true; m.receiveShadow = true; head.add(m);
+    }
     head.position.copy(pos);
     head.quaternion.copy(quat);
     const s = f.scale * (0.88 + Math.random()*0.22);
     head.scale.setScalar(0.0001);
     bouquet.add(head);
 
-    blooms.push({
+    const bloom = {
       obj: head, base: pos.clone(), quat: quat.clone(), scale: s,
       delay: i * 0.035 + Math.random()*0.05,
       phase: Math.random()*Math.PI*2,
       speed: 0.55 + Math.random()*0.55,
       amp: 0.022 + Math.random()*0.028
-    });
+    };
+    blooms.push(bloom);
 
-    // --- stem: base of vase → mouth → head, drawn as short cylinders ---
+    // --- stem: base of vase → mouth → head, one smooth tapered tube ---
     const foot  = new THREE.Vector3((Math.random()-0.5)*0.10, 0.10, (Math.random()-0.5)*0.10);
     const mouth = new THREE.Vector3(dir.x*VASE_TOP_R*0.62*(0.5+Math.random()*0.5), VASE_H - 0.06,
                                     dir.z*VASE_TOP_R*0.62*(0.5+Math.random()*0.5));
     const mid   = new THREE.Vector3().lerpVectors(mouth, pos, 0.55).addScaledVector(dir, 0.05);
     const curve = new THREE.CatmullRomCurve3([foot, mouth, mid, pos], false, 'catmullrom', 0.4);
-    const samples = curve.getPoints(7);
-    for(let k=0;k<samples.length-1;k++){
-      const kt = k/(samples.length-1);
-      stemGeoms.push(rod(samples[k], samples[k+1], 0.0155 - kt*0.006, 0.0155 - (kt+0.15)*0.006, 5));
+    stemGeoms.push(stemTube(curve, bloom));
+
+    // --- leaves along the visible part of the stem ---
+    const spec = STEM_LEAVES[f.id];
+    if(spec){
+      if(!leafTpl[f.id]) leafTpl[f.id] = leafTemplates(spec);
+      const tpls = leafTpl[f.id];
+      const az0 = Math.random() * Math.PI * 2;
+      for(let k=0;k<spec.n;k++){
+        const u  = MU.lerp(0.40, 0.66, spec.n === 1 ? 0.5 : k/(spec.n-1)) + (Math.random()-0.5)*0.04;
+        const at = curve.getPoint(u), tan = curve.getTangent(u);
+        const g = layLeaf(tpls[(k + variant) % tpls.length], at, tan,
+          az0 + k * (2.4 + Math.random()*0.5), 0.75 + Math.random()*0.35, f.scale * (0.85 + Math.random()*0.3));
+        setSway(g, bloom, swayWeight(at.y, pos.y));
+        leafGeoms.push(g);
+      }
     }
   }
 
@@ -1047,6 +1301,16 @@ function rebuild(){
     stemMesh.castShadow = true; stemMesh.receiveShadow = true;
     bouquet.add(stemMesh);
   }
+  const leafGeo = mergeAll(leafGeoms);
+  if(leafGeo){
+    ownedGeoms.push(leafGeo);
+    leafMat.opacity = 0;
+    leafMat.transparent = true;
+    const m = new THREE.Mesh(leafGeo, leafMat);
+    m.castShadow = true; m.receiveShadow = true;
+    bouquet.add(m);
+  }
+  leafTpl = {};
 
   desiredTarget.set(0, centerY * 0.86, 0);
   buildTime = clock.getElapsedTime();
@@ -1158,18 +1422,24 @@ function animate(){
       _se.set(Math.sin(s) * b.amp, Math.sin(s*0.61) * b.amp*0.8, Math.cos(s*0.83) * b.amp);
       _sq.setFromEuler(_se);
       b.obj.quaternion.copy(b.quat).multiply(_sq);
+      // same formula as the stem shader (addSway), so the stem bends with the head
       b.obj.position.set(
-        b.base.x + Math.sin(s*0.9) * 0.006,
-        b.base.y + Math.sin(s*0.7 + 1.3) * 0.004,
-        b.base.z + Math.cos(s*0.8) * 0.006
+        b.base.x + Math.sin(s*0.9) * SWAY_X,
+        b.base.y + Math.sin(s*0.7 + 1.3) * SWAY_Y,
+        b.base.z + Math.cos(s*0.8) * SWAY_X
       );
     }
   }
+  swayT.value = t;
+  swayOn.value = reduceMotion ? 0 : 1;
 
   if(stemMesh && stemMat.opacity < 1){
     const o = MU.clamp((t - buildTime) / 1.1, 0, 1);
-    stemMat.opacity = o;
-    if(o >= 1 && stemMat.transparent){ stemMat.transparent = false; stemMat.needsUpdate = true; }
+    stemMat.opacity = leafMat.opacity = o;
+    if(o >= 1 && stemMat.transparent){
+      stemMat.transparent = leafMat.transparent = false;
+      stemMat.needsUpdate = leafMat.needsUpdate = true;
+    }
   }
 
   updateCamera(dt);
